@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  
+  
+  <Fragment>
+    
+    <Property Id="CustomSequence" Hidden="yes" />
+    <InstallExecuteSequence>
+
+      <AppSearch Suppress="yes" />
+      <CCPSearch Suppress="yes" />
+      <RMCCPSearch Suppress="yes" />
+      
+      <ValidateProductID Suppress="yes" />
+      <SetODBCFolders Suppress="yes" />
+      <StopServices Suppress="yes" />
+      <RemoveEnvironmentStrings Suppress="yes" />
+      <InstallServices Suppress="yes" />      
+      
+      <ProcessComponents Suppress="yes" />
+      <PublishComponents Suppress="yes"/>
+      <PublishFeatures Suppress="yes" />
+      <PublishProduct Suppress="yes" />
+      <WriteRegistryValues Suppress="yes" />
+      <RegisterClassInfo Suppress="yes" />
+      <RegisterComPlus Suppress="yes" />
+      <RegisterExtensionInfo Suppress="yes" />
+      <RegisterFonts Suppress="yes" />
+      <RegisterMIMEInfo Suppress="yes" />
+      <RegisterProduct Suppress="yes" />
+      <RegisterProgIdInfo Suppress="yes" />
+      <RegisterTypeLibraries Suppress="yes" />
+      <RegisterUser Suppress="yes" />
+      <AllocateRegistrySpace Suppress="yes" />
+      <SelfRegModules Suppress="yes" />
+      <MsiPublishAssemblies Suppress="yes" />
+
+      <RemoveRegistryValues Suppress="yes" />
+      <UnpublishFeatures Suppress="yes" />
+
+    </InstallExecuteSequence>
+
+
+    <InstallUISequence>
+
+      <AppSearch Suppress="yes" />
+      <CCPSearch Suppress="yes" />
+      <RMCCPSearch Suppress="yes" />
+      <ValidateProductID Suppress="yes" />
+
+      <Custom Action='GetCalendarStart' After ='AppSearch'></Custom>
+      <Custom Action='CheckPythonVersion' Before ='ExecuteAction'>NOT CERTONLY</Custom>
+      <Custom Action='GenerateSSLCert' After='ExecuteAction'>NOT SKIPCERTGEN</Custom>
+      <Custom Action='InstallPython36' After='ExecuteAction'>NOT USEPYTHON2 AND INSTALLPYTHON AND NOT CERTONLY</Custom>
+      <Custom Action='InstallPython27' After='ExecuteAction'>USEPYTHON2 AND INSTALLPYTHON AND NOT CERTONLY</Custom>
+      <Custom Action='InstallVcRedist' After='ExecuteAction'>USEPYTHON2 AND INSTALLPYTHON AND NOT CERTONLY</Custom>
+
+      
+    </InstallUISequence>
+
+
+    
+  </Fragment>
+</Wix>

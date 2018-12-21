@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) .NET Foundation and contributors. All rights reserved. Licensed under the Microsoft Reciprocal License. See LICENSE.TXT file in the project root for full license information. -->
+
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <UI>
+
+          <TextStyle Id="White8" FaceName="Tahoma" Size="8" Red="255" Green="255" Blue="255"  />
+          <TextStyle Id="White12" FaceName="Tahoma" Size="12" Red="255" Green="255" Blue="255"  />
+
+          <UIRef Id="WixUI_UST" />
+          <UIRef Id="WixUI_ErrorProgressText" />
+
+          <Dialog Id="UST_ExitDialog" Width="370" Height="270" Title="!(loc.ExitDialog_Title)">
+                <Control Id="Finish" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Cancel="yes" Text="!(loc.WixUIFinish)" />
+                <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Text="Exit" />
+                <Control Id="Bitmap" Type="Bitmap" X="0" Y="0" Width="124" Height="234" TabSkip="no" Text="!(loc.ExitDialogBitmap)" />
+                <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+                <Control Id="Description" Type="Text" X="135" Y="70" Width="220" Height="40" Transparent="yes" NoPrefix="yes" Text="!(loc.ExitDialogDescription)" />
+                <Control Id="Title" Type="Text" X="135" Y="20" Width="220" Height="40" Transparent="yes" NoPrefix="yes" Text="!(loc.ExitDialogTitle)" />
+              
+                <Control Id="LaunchConfigCheckBox" Type="CheckBox" X="135" Y="90" Width="220" Height="15" Property="LAUNCHUST" CheckBoxValue="1"
+                         Text="Launch the UST configuration wizard" />
+                <Control Id="LaunchWindowCheckBox" Type="CheckBox" X="135" Y="105" Width="220" Height="15" Property="LAUNCHIO" CheckBoxValue="1"
+                         Text="Open the Adobe IO Console" />
+                <Control Id="LaunchIOCheckBox" Type="CheckBox" X="135" Y="120" Width="220" Height="15" Property="LAUNCHUSTFOLDER" CheckBoxValue="1"
+                         Text="Open the UST Folder" />
+
+
+              
+          </Dialog>
+
+            <InstallUISequence>
+                <Show Dialog="UST_ExitDialog" OnExit="success" Overridable="yes" />
+            </InstallUISequence>
+
+            <AdminUISequence>
+                <Show Dialog="UST_ExitDialog" OnExit="success" Overridable="yes" />
+            </AdminUISequence>
+        </UI>
+    </Fragment>
+</Wix>
