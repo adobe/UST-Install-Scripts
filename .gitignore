@@ -1,0 +1,10 @@
+output/
+.vs/
+bin/
+obj/
+.vscode/
+
+required_resources.wxs
+USTCustomActions.CA.dll
+
+files/

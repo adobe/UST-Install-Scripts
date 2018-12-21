@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+
+      <Property Id="CustomUI" Hidden="yes" />
+      <WixVariable Id="WixUILicenseRtf" Value="conf\adobe-eula.rtf" />
+      <WixVariable Id="WixUIBannerBmp" Value="images\banner-adobe.bmp" />
+      <WixVariable Id="WixUIDialogBmp" Value="images\dlgbmp-adobe-thin.bmp" />
+
+      <UI Id="WixUI_UST">
+            <TextStyle Id="WixUI_Font_Normal" FaceName="Tahoma" Size="8" />
+            <TextStyle Id="WixUI_Font_Bigger" FaceName="Tahoma" Size="12" />
+            <TextStyle Id="WixUI_Font_Title" FaceName="Tahoma" Size="9" Bold="yes" />
+            <TextStyle Id="Test" FaceName="Arial" Blue="255" Size="12" Strike="yes" />
+
+            <Property Id="DefaultUIFont" Value="WixUI_Font_Normal" />
+            <Property Id="WixUI_Mode" Value="InstallDir" />
+
+            <DialogRef Id="BrowseDlg" />
+            <DialogRef Id="DiskCostDlg" />
+            <DialogRef Id="ErrorDlg" />
+            <DialogRef Id="UST_FatalError" />
+            <DialogRef Id="FilesInUse" />
+            <DialogRef Id="MsiRMFilesInUse" />
+            <DialogRef Id="UST_PrepareDlg" />
+            <DialogRef Id="UST_ProgressDlg" />
+            <DialogRef Id="UST_ResumeDlg" />
+            <DialogRef Id="UST_UserExit" />
+            
+            <Publish Dialog="BrowseDlg" Control="OK" Event="DoAction" Value="WixUIValidatePath" Order="3">1</Publish>
+            <Publish Dialog="BrowseDlg" Control="OK" Event="SpawnDialog" Value="InvalidDirDlg" Order="4"><![CDATA[NOT WIXUI_DONTVALIDATEPATH AND WIXUI_INSTALLDIR_VALID<>"1"]]></Publish>
+
+            <Publish Dialog="UST_ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999">1</Publish>
+            <Publish Dialog="UST_ExitDialog" Control="Cancel" Event="EndDialog" Value="Return" Order="999">1</Publish>
+
+            <Publish Dialog="UST_WelcomeDlg" Control="Next" Event="NewDialog" Value="UST_LicenseAgreementDlg"/>
+
+            <Publish Dialog="UST_LicenseAgreementDlg" Control="Back" Event="NewDialog" Value="UST_WelcomeDlg">1</Publish>
+            <Publish Dialog="UST_LicenseAgreementDlg" Control="Next" Event="NewDialog" Value="UST_InstallDirDlg">UST_LicenseAccepted = "1"</Publish>
+
+            <Publish Dialog="UST_InstallDirDlg" Control="Back" Event="NewDialog" Value="UST_LicenseAgreementDlg">1</Publish>
+            <Publish Dialog="UST_InstallDirDlg" Control="Next" Event="SetTargetPath" Value="[WIXUI_INSTALLDIR]" Order="1">1</Publish>
+            <Publish Dialog="UST_InstallDirDlg" Control="Next" Event="DoAction" Value="WixUIValidatePath" Order="2">NOT WIXUI_DONTVALIDATEPATH</Publish>
+            <Publish Dialog="UST_InstallDirDlg" Control="Next" Event="SpawnDialog" Value="InvalidDirDlg" Order="3"><![CDATA[NOT WIXUI_DONTVALIDATEPATH AND WIXUI_INSTALLDIR_VALID<>"1"]]></Publish>
+            <Publish Dialog="UST_InstallDirDlg" Control="Next" Event="NewDialog" Value="UST_CertgenDlg" Order="4">WIXUI_DONTVALIDATEPATH OR WIXUI_INSTALLDIR_VALID="1"</Publish>
+            <Publish Dialog="UST_InstallDirDlg" Control="ChangeFolder" Property="_BrowseProperty" Value="[WIXUI_INSTALLDIR]" Order="1">1</Publish>
+            <Publish Dialog="UST_InstallDirDlg" Control="ChangeFolder" Event="SpawnDialog" Value="BrowseDlg" Order="2">1</Publish>
+
+            <Publish Dialog="UST_CertgenDlg" Control="Back" Event="NewDialog" Value="UST_InstallDirDlg">1</Publish>
+            <Publish Dialog="UST_CertgenDlg" Control="Next" Event="NewDialog" Value="UST_VerifyReadyDlg">1</Publish>
+          
+            <Publish Dialog="UST_VerifyReadyDlg" Control="Back" Event="NewDialog" Value="UST_CertgenDlg" Order="1">NOT Installed</Publish>
+          
+            <Publish Dialog="UST_ExitDialog" Control="Finish" Event="DoAction" Value="LaunchUST">LAUNCHUST</Publish>
+            <Publish Dialog="UST_ExitDialog" Control="Finish" Event="DoAction" Value="LaunchIO">LAUNCHIO</Publish>
+            <Publish Dialog="UST_ExitDialog" Control="Finish" Event="DoAction" Value="LaunchUSTWindow">LAUNCHUSTFOLDER</Publish>
+
+            
+            <ProgressText Action="GenerateSSLCert">Generating SSL certificate...</ProgressText>
+            <ProgressText Action="InstallPython27">Installing Python 2.7...</ProgressText>
+            <ProgressText Action="InstallPython36">Installing Python 3.6...</ProgressText>
+            <ProgressText Action="InstallVcRedist">Installing Visual Studio C++ 2008 Redistributable...</ProgressText>
+          
+        </UI>
+
+        <UIRef Id="WixUI_Common" />
+    </Fragment>
+</Wix>
