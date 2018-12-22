@@ -57,4 +57,7 @@
     <!-- <PostBuildEvent>..\..\..\Resources\ILMerge.exe /out:AdobeIOCertgen.dll AdobeCertGen.dll BouncyCastle.Crypto.dll -->
     <!-- </PostBuildEvent> -->
   </PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent>..\..\..\..\Installer\conf\ILMerge.exe /out:AdobeCertGenC.dll BouncyCastle.Crypto.dll</PostBuildEvent>
+  </PropertyGroup>
 </Project>

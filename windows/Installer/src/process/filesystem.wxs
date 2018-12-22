@@ -60,6 +60,11 @@
                   Icon="CFGAppIcon"
                   Target="[INSTALLDIR]\Utils\Adobe.UST.Configuration.App.exe">
         </Shortcut>
+        <Shortcut Id="CertgenShortcut"
+          Name="Adobe.IO Certgen"
+          Icon="CertgenIcon"
+          Target="[INSTALLDIR]\Utils\Certgen\adobeio-certgen.exe">
+        </Shortcut>
       </Component>
     </DirectoryRef>
 
