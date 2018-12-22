@@ -163,7 +163,7 @@ function CopyFiles(){
 
 function CreateFolders(){
     Log "Creating folders... "
-    $dirlist = @('Managed','PreMapped','PreMapped\Utils','PreMapped\Utils\Notepad++')
+    $dirlist = @('Managed','PreMapped','PreMapped\Utils','PreMapped\Utils\Notepad++','PreMapped\Utils\Certgen')
     New-Item -ItemType directory -Path $options['root'] -Force | Out-Null
     foreach ($d in $dirlist){ New-Item -ItemType directory -Path ($options['root'] + "\$d") -Force  | Out-Null }
 }
