@@ -58,6 +58,7 @@
     <!-- </PostBuildEvent> -->
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>..\..\..\..\Installer\conf\ILMerge.exe /out:AdobeCertGenC.dll BouncyCastle.Crypto.dll</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>

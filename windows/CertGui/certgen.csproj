@@ -29,7 +29,7 @@
     <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
-    <SignManifests>true</SignManifests>
+    <SignManifests>false</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>false</SignAssembly>
@@ -73,7 +73,6 @@
       <DesignTime>True</DesignTime>
     </Compile>
     <None Include="app.config" />
-    <None Include="Resources\cert.pfx" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -85,20 +84,10 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\adobe-logo-icona-799.jpg" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\E0I3Va.jpg" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\banner-adobe.bmp" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\certgen_header.jpg" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="icon.ico" />
-    <Content Include="Resources\ILMerge.exe" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AdobeCertGen\AdobeCertGen.csproj">
@@ -110,7 +99,8 @@
   <PropertyGroup>
     <PostBuildEvent>..\..\..\..\Installer\conf\ILMerge.exe /target:winexe /out:adobeio-certgen.exe certgen.exe BouncyCastle.Crypto.dll AdobeCertGen.dll
 copy certgen.exe.config adobeio-certgen.exe.config /Y
-copy adobeio-certgen.exe ..\..\..\..\Installer\files\PreMapped\Utils\Certgen
-copy adobeio-certgen.exe.config ..\..\..\..\Installer\files\PreMapped\Utils\Certgen</PostBuildEvent>
+
+
+</PostBuildEvent>
   </PropertyGroup>
 </Project>

@@ -182,20 +182,52 @@ function PreBuild(){
 
 }
 
-function Build(){
+function BuildCertGui {
+
+	$cpath = $PWD
+
+    Set-Location ..\CertGui
+    Write-Host $pwd
+	
+	MSBuild.exe .\certgen.sln /p:Configuration=Release /p:Platform="x64" -t:Clean
+    MSBuild.exe .\certgen.sln /p:Configuration=Release /p:Platform="x64" -t:Build 
+    
+    Remove-Item "bin\x64\Release\signinput" -Force -Recurse -ErrorAction SilentlyContinue
+    Remove-Item "bin\x64\Release\sign" -Force -Recurse -ErrorAction SilentlyContinue
+
+    New-Item -ItemType directory -Path "bin\x64\Release\signinput" -Force | Out-Null
+
+    Copy-Item "bin\x64\Release\adobeio-certgen.exe" "bin\x64\Release\signinput"
+    Copy-Item "bin\x64\Release\adobeio-certgen.exe.config" "bin\x64\Release\signinput"
+
+    if ($sign) {
+        Sign "bin\x64\Release\signinput" "42151"
+        Copy-Item "bin\x64\Release\sign\*" "..\Installer\files\PreMapped\Utils\Certgen"
+     } else {
+         Copy-Item "bin\x64\Release\signinput\*" "..\Installer\files\PreMapped\Utils\Certgen"
+     } 
+
+     Set-Location $cpath
+
+}
+
+function BuildMSI(){
 
     Log "Starting build process..... " "green"
 
     MSBuild.exe .\ust-wix.sln /p:Configuration=Release /p:Platform="x64" -t:Clean
     MSBuild.exe .\ust-wix.sln /p:Configuration=Release /p:Platform="x64" -t:Build
+  
+    Log "BuildMSI finished: output in bin/en-us/AdobeUSTSetup.msi" "green"
 
-    Log "Build finished: output in bin/en-us/AdobeUSTSetup.msi" "green"
+    if ($sign) {Sign "bin\en-us" "42117"}
+
 }
 
-function Sign(){
-    $path = Resolve-Path "bin\en-us"
+function Sign($path, $rule){
+    $path = Resolve-Path $path
     Log "Begin signing process..... " "green"
-    powershell.exe -File C:\signing\sign.ps1 $path
+    powershell.exe -File C:\signing\sign.ps1 -buidpath $path -ruleid $rule
     Log "Signing complete..... " "green"
 }
 
@@ -203,9 +235,11 @@ function Run(){
 
     Log "Begin build process..... " "green"
     if (!$nopre) {PreBuild}
-    Build
-    if ($sign) {Sign}
-    Log "Build finished.... " "green"
+    
+	BuildCertGui
+    BuildMSI    
+
+    Log "BuildMSI finished.... " "green"
 
 }
 
