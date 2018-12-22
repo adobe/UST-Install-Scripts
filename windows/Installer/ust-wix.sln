@@ -18,7 +18,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatePickerUI", "..\DatePick
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "USTCustomActions", "..\USTCustomActions\USTCustomActions.csproj", "{8DF6ADA1-E4B0-442F-8AB2-F277D38E4BBF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CertGui", "..\CertGui\CertGui.csproj", "{0D55BF98-8E64-48B0-8D82-20F9F92A2E85}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CertGui", "..\CertGui\certgen.csproj", "{0D55BF98-8E64-48B0-8D82-20F9F92A2E85}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
