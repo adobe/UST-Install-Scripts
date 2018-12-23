@@ -221,8 +221,8 @@ function BuildCertGui {
 	$cpath = $PWD    
     Set-Location ..\CertGui
 
-	MSBuild.exe .\certgen.sln /p:Configuration=Release /p:Platform="x64" -t:Clean
-    MSBuild.exe .\certgen.sln /p:Configuration=Release /p:Platform="x64" -t:Build    
+	MSBuild.exe .\CertGui.sln /p:Configuration=Release /p:Platform="x64" -t:Clean
+    MSBuild.exe .\CertGui.sln /p:Configuration=Release /p:Platform="x64" -t:Build    
 
     $signfolder = SetSignLocation "bin"
     $signed = ("$signfolder\" + $options['signing']['finished_dir'])

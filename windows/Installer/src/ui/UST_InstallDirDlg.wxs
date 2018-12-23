@@ -24,15 +24,17 @@
                   <Condition Action="disable">CERTONLY</Condition>
                   <Condition Action="enable">NOT CERTONLY</Condition>
                 </Control>
-                <Control Id="CertGenCheckBox" Type="CheckBox" X="20" Y="136" Width="330" Height="18" CheckBoxValue="1" Property="CERTONLY" Text="Regenerate UMAPI cert/key pair ONLY (nothing will be installed)" />
-                <Control Id="Python2CheckBox" Type="CheckBox" X="20" Y="154" Width="330" Height="18" CheckBoxValue="1" Property="USEPYTHON2" Text="Compatability Mode (Python 2)">
+             
+                <Control Id="Python2CheckBox" Type="CheckBox" X="20" Y="136" Width="330" Height="18" CheckBoxValue="1" Property="USEPYTHON2" Text="Compatability Mode (Python 2)">
                   <Condition Action="disable">CERTONLY</Condition>
                   <Condition Action="enable">NOT CERTONLY</Condition>
                 </Control>
-                <Control Id="CompModeDescText" Type="Text" X="20" Y="174" Width="330" Height="22" NoPrefix="yes" Text="Uses Python 2 instead of 3.  Try this if Python 3 fails to install due to missing windows updates (typically needed on 2008R2 or or very old verions of 2012R2)">
+                <Control Id="CompModeDescText" Type="Text" X="20" Y="154" Width="330" Height="22" NoPrefix="yes" Text="Uses Python 2 instead of 3.  Try this if Python 3 fails to install due to missing windows updates (typically needed on 2008R2 or or very old verions of 2012R2)">
                   <Condition Action="disable">NOT USEPYTHON2 OR CERTONLY</Condition>
                   <Condition Action="enable">NOT CERTONLY AND USEPYTHON2</Condition>
                 </Control>
+
+              <!--<Control Id="CertGenCheckBox" Type="CheckBox" X="20" Y="174" Width="330" Height="18" CheckBoxValue="1" Property="CERTONLY" Text="Regenerate UMAPI cert/key pair ONLY (nothing will be installed)" />-->
               <Control Id="FooterText" Type="Text" X="18" Y="230" Width="100" Height="18" Disabled="yes" NoPrefix="yes" Text="[FOOTER]" />
 
             </Dialog>
