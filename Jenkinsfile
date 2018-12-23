@@ -13,9 +13,11 @@ pipeline {
 			steps {
 				script{     
 					dir("windows/Installer") {
-						sh 'powershell -File build.ps1 -sign'
-						archiveArtifacts artifacts: "bin/Signing/Finished/**.*", fingerprint: true
-						archiveArtifacts artifacts: "../CertGui/bin/Signing/Finished/**.*", fingerprint: true
+						sh 'powershell -File build.ps1'
+					}
+					dir("windows"){
+						archiveArtifacts artifacts: "Installer/bin/Signing/Finished/**.*", fingerprint: true
+						archiveArtifacts artifacts: "CertGui/bin/Signing/Finished/**.*", fingerprint: true						 
 					}
 				}
 			}
