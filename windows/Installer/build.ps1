@@ -24,7 +24,7 @@ if ($args) {Write-Host "Parameter '$args' not recognized"; exit }
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 $options = @{
-    '7zPath' = 'conf\7zip\7z.exe'
+    '7zPath' = Resolve-Path 'conf\7zip\7z.exe'
     'ust_version' = $ustversion
     'log_level' = 'debug'
     'root' = 'files'
@@ -238,6 +238,7 @@ function BuildCertGui {
         Move-Item "$unsigned\*" $signed
      } 
 
+    Start-Process -FilePath $options['7zPath'] -ArgumentList "a -tzip `"$signed\adobeio-certgen.zip`" `"$signed\*`"" -Wait -WindowStyle Hidden
     Copy-Item "$signed\*" "..\Installer\files\PreMapped\Utils\Certgen"
 
     Set-Location $cpath
