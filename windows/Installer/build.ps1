@@ -276,7 +276,7 @@ function Sign($path, $output, $rule){
 function Run(){
 
     Log "Begin build process..... " "green"
-  #  if (!$nopre) {PreBuild}
+    if (!$nopre) {PreBuild}
     
 	BuildCertGui
     BuildMSI    
