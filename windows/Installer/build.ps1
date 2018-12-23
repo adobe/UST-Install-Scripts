@@ -219,7 +219,6 @@ function PreBuild(){
 function BuildCertGui {
 
 	$cpath = $PWD    
-
     Set-Location ..\CertGui
 
 	MSBuild.exe .\certgen.sln /p:Configuration=Release /p:Platform="x64" -t:Clean
@@ -234,13 +233,12 @@ function BuildCertGui {
 
     if ($sign) {
         Sign $unsigned $signed "42151"        
-     } else {
+    } else {
         Move-Item "$unsigned\*" $signed
-     } 
+    } 
 
-    Start-Process -FilePath $options['7zPath'] -ArgumentList "a -tzip `"$signed\adobeio-certgen.zip`" `"$signed\*`"" -Wait -WindowStyle Hidden
     Copy-Item "$signed\*" "..\Installer\files\PreMapped\Utils\Certgen"
-
+    Start-Process -FilePath $options['7zPath'] -ArgumentList "a -tzip `"$signed\adobeio-certgen.zip`" `"$signed\*`"" -Wait -WindowStyle Hidden
     Set-Location $cpath
 
 }
