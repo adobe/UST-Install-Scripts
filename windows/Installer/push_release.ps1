@@ -5,6 +5,7 @@ param(
   [String]$repo="adobe/UST-Install-Scripts"
   )
 
+  
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $token = $env:GITHUB_TOKEN
 
@@ -27,7 +28,7 @@ $release = (Invoke-RestMethod -Uri $releaseURL -Method 'Post' -Body $body -Heade
 
 foreach ($filepath in $filepaths) {
 
-    $filepath = Resolve-Path $filepath
+    $filepath = (Resolve-Path $filepath).path
     $filename = $filepath.Split("\")[-1]
     
     $uploadURL = "https://uploads.github.com/repos/$repo/releases/" + $release.id + "/assets?name=$filename&access_token=$token"

@@ -31,7 +31,7 @@ pipeline {
 			steps {
 				script{     
 					dir("windows") {						
-						sh 'powershell -File Installer/push_release.ps1 -filepaths "$msi_file", "$cert_file" -message "$MESSAGE"'
+						sh 'powershell -File Installer/push_release.ps1 -filepaths "$msi_file","$cert_file" -message "$MESSAGE"'
 					}
 				}
 			}
