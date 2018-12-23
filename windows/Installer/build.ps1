@@ -227,7 +227,7 @@ function BuildMSI(){
 function Sign($path, $rule){
     $path = Resolve-Path $path
     Log "Begin signing process..... " "green"
-    powershell.exe -File C:\signing\sign.ps1 -buidpath $path -ruleid $rule
+    powershell.exe -File C:\signing\sign.ps1 -buildpath $path -ruleid $rule
     Log "Signing complete..... " "green"
 }
 
