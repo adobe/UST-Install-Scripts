@@ -248,14 +248,14 @@ function BuildMSI(){
 
     Log "Starting build process..... " "green"
 
-    $signfolder = SetSignLocation "bin"
-    $signed = ("$signfolder\" + $options['signing']['finished_dir'])
-    $unsigned = ("$signfolder\" + $options['signing']['unsigned_dir'])
-
     MSBuild.exe .\ust-wix.sln /p:Configuration=Release /p:Platform="x64" -t:Clean
     MSBuild.exe .\ust-wix.sln /p:Configuration=Release /p:Platform="x64" -t:Build
   
     Log "BuildMSI finished: output in bin/en-us/AdobeUSTSetup.msi" "green"
+
+    $signfolder = SetSignLocation "bin"
+    $signed = ("$signfolder\" + $options['signing']['finished_dir'])
+    $unsigned = ("$signfolder\" + $options['signing']['unsigned_dir'])
 
     Copy-Item "bin\en-us\AdobeUSTSetup.msi" $unsigned
 
