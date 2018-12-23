@@ -233,7 +233,7 @@ function BuildCertGui {
     Copy-Item "bin\x64\Release\adobeio-certgen.exe.config" $unsigned
 
     if ($sign) {
-        Sign $unsigned "42151"        
+        Sign $unsigned $signed "42151"        
      } else {
         Move-Item "$unsigned\*" $signed
      } 
@@ -266,10 +266,10 @@ function BuildMSI(){
     } 
 }
 
-function Sign($path, $rule){
+function Sign($path, $output, $rule){
     $path = Resolve-Path $path
     Log "Begin signing process for $path..... " "green"
-    powershell.exe -File C:\signing\sign.ps1 -buildpath $path -ruleid $rule
+    powershell.exe -File C:\signing\sign.ps1 -buildpath $path -outputpath $output -ruleid $rule
     Log "Signing complete..... " "green"
 }
 
