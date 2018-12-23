@@ -260,7 +260,7 @@ function BuildMSI(){
     Copy-Item "bin\en-us\AdobeUSTSetup.msi" $unsigned
 
     if ($sign) {
-        Sign $unsigned "42117"
+        Sign $unsigned $signed "42117"
     } else {
         Move-Item "$unsigned\*" $signed
     } 
