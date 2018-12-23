@@ -1,5 +1,9 @@
 pipeline {
 	agent any
+	environment {
+		msi_file = "Installer/bin/Signing/Finished/AdobeUSTSetup.msi"
+		cert_file = "CertGui/bin/Signing/Finished/adobeio-certgen.zip"
+	}
 	stages {
 		stage('Configure') {
 			steps {
@@ -16,8 +20,8 @@ pipeline {
 						sh 'powershell -File build.ps1 -sign'
 					}
 					dir("windows"){
-						archiveArtifacts artifacts: "Installer/bin/Signing/Finished/AdobeUSTSetup.msi", fingerprint: true
-						archiveArtifacts artifacts: "CertGui/bin/Signing/Finished/adobeio-certgen.zip", fingerprint: true						 
+						archiveArtifacts artifacts: $msi_file, fingerprint: true
+						archiveArtifacts artifacts: $cert_file, fingerprint: true						 
 					}
 				}
 			}
@@ -26,8 +30,8 @@ pipeline {
 			when {expression { env.DO_RELEASE == 'true' }}
 			steps {
 				script{     
-					dir("windows/Installer") {						
-						sh 'powershell -File push_release.ps1 -filepath $msi_file -message "$MESSAGE"'
+					dir("windows") {						
+						sh 'powershell -File push_release.ps1 -filepaths $msi_file, $cert_file -message "$MESSAGE"'
 					}
 				}
 			}
