@@ -34,8 +34,15 @@ $options = @{
     'python_urls' =  @{
         '3.6' = 'https://www.python.org/ftp/python/3.6.7/python-3.6.7-amd64.exe'    
         '2.7' = 'https://www.python.org/ftp/python/2.7.15/python-2.7.15.amd64.msi'    
+    }
+    'signing' = @{
+        'signing_dir' = 'Signing'
+        'unsigned_dir' = 'ToBeSigned'
+        'finished_dir' = 'Finished'
     }    
 }
+
+
 
 $current_cfg = @{
     'USTVersion' = 'v2.3'
@@ -163,9 +170,36 @@ function CopyFiles(){
 
 function CreateFolders(){
     Log "Creating folders... "
-    $dirlist = @('Managed','PreMapped','PreMapped\Utils','PreMapped\Utils\Notepad++','PreMapped\Utils\Certgen')
+    $dirlist = @(
+        'Managed',
+        'PreMapped',
+        'PreMapped\Utils',
+        'PreMapped\Utils\Notepad++',
+        'PreMapped\Utils\Certgen')
+
     New-Item -ItemType directory -Path $options['root'] -Force | Out-Null
     foreach ($d in $dirlist){ New-Item -ItemType directory -Path ($options['root'] + "\$d") -Force  | Out-Null }
+
+
+}
+
+
+function SetSignLocation($root){
+
+    $root = Resolve-Path $root
+
+    $signing = ("$root\" + $options['signing']['signing_dir'])
+    $fileinput =  ("$signing\" + $options['signing']['unsigned_dir'])
+    $fileoutput = ("$signing\" + $options['signing']['finished_dir'])
+
+    Remove-Item $signing -Force -Recurse -ErrorAction SilentlyContinue
+
+    New-Item -ItemType directory -Path "$signing" -Force | Out-Null    
+    New-Item -ItemType directory -Path "$fileinput" -Force | Out-Null
+    New-Item -ItemType directory -Path "$fileoutput" -Force | Out-Null
+
+    return $signing
+
 }
 
 
@@ -184,30 +218,29 @@ function PreBuild(){
 
 function BuildCertGui {
 
-	$cpath = $PWD
+	$cpath = $PWD    
 
     Set-Location ..\CertGui
-    Write-Host $pwd
-	
+
 	MSBuild.exe .\certgen.sln /p:Configuration=Release /p:Platform="x64" -t:Clean
-    MSBuild.exe .\certgen.sln /p:Configuration=Release /p:Platform="x64" -t:Build 
-    
-    Remove-Item "bin\x64\Release\signinput" -Force -Recurse -ErrorAction SilentlyContinue
-    Remove-Item "bin\x64\Release\sign" -Force -Recurse -ErrorAction SilentlyContinue
+    MSBuild.exe .\certgen.sln /p:Configuration=Release /p:Platform="x64" -t:Build    
 
-    New-Item -ItemType directory -Path "bin\x64\Release\signinput" -Force | Out-Null
+    $signfolder = SetSignLocation "bin"
+    $signed = ("$signfolder\" + $options['signing']['finished_dir'])
+    $unsigned = ("$signfolder\" + $options['signing']['unsigned_dir'])
 
-    Copy-Item "bin\x64\Release\adobeio-certgen.exe" "bin\x64\Release\signinput"
-    Copy-Item "bin\x64\Release\adobeio-certgen.exe.config" "bin\x64\Release\signinput"
+    Copy-Item "bin\x64\Release\adobeio-certgen.exe" $unsigned
+    Copy-Item "bin\x64\Release\adobeio-certgen.exe.config" $unsigned
 
     if ($sign) {
-        Sign "bin\x64\Release\signinput" "42151"
-        Copy-Item "bin\x64\Release\sign\*" "..\Installer\files\PreMapped\Utils\Certgen"
+        Sign $unsigned "42151"        
      } else {
-         Copy-Item "bin\x64\Release\signinput\*" "..\Installer\files\PreMapped\Utils\Certgen"
+        Move-Item "$unsigned\*" $signed
      } 
 
-     Set-Location $cpath
+    Copy-Item "$signed\*" "..\Installer\files\PreMapped\Utils\Certgen"
+
+    Set-Location $cpath
 
 }
 
@@ -215,18 +248,27 @@ function BuildMSI(){
 
     Log "Starting build process..... " "green"
 
+    $signfolder = SetSignLocation "bin"
+    $signed = ("$signfolder\" + $options['signing']['finished_dir'])
+    $unsigned = ("$signfolder\" + $options['signing']['unsigned_dir'])
+
     MSBuild.exe .\ust-wix.sln /p:Configuration=Release /p:Platform="x64" -t:Clean
     MSBuild.exe .\ust-wix.sln /p:Configuration=Release /p:Platform="x64" -t:Build
   
     Log "BuildMSI finished: output in bin/en-us/AdobeUSTSetup.msi" "green"
 
-    if ($sign) {Sign "bin\en-us" "42117"}
+    Copy-Item "bin\en-us\AdobeUSTSetup.msi" $unsigned
 
+    if ($sign) {
+        Sign $unsigned "42117"
+    } else {
+        Move-Item "$unsigned\*" $signed
+    } 
 }
 
 function Sign($path, $rule){
     $path = Resolve-Path $path
-    Log "Begin signing process..... " "green"
+    Log "Begin signing process for $path..... " "green"
     powershell.exe -File C:\signing\sign.ps1 -buildpath $path -ruleid $rule
     Log "Signing complete..... " "green"
 }
@@ -234,7 +276,7 @@ function Sign($path, $rule){
 function Run(){
 
     Log "Begin build process..... " "green"
-    if (!$nopre) {PreBuild}
+  #  if (!$nopre) {PreBuild}
     
 	BuildCertGui
     BuildMSI    

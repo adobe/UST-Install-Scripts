@@ -1,15 +1,11 @@
 pipeline {
 	agent any
-	environment {
-		msi_file = 'bin/sign/AdobeUSTSetup.msi'
-		rel_key = 'release:'
-	}
 	stages {
 		stage('Configure') {
 			steps {
 				script{
 					env.MESSAGE = sh(returnStdout: true, script: 'git log -1 --pretty=format:%s')
-					env.DO_RELEASE = env.MESSAGE.matches(rel_key + "(.*)")
+					env.DO_RELEASE = env.MESSAGE.matches("release:" + "(.*)")
 				}
 			}
 		}	
@@ -18,7 +14,8 @@ pipeline {
 				script{     
 					dir("windows/Installer") {
 						sh 'powershell -File build.ps1 -sign'
-						archiveArtifacts artifacts: "$msi_file", fingerprint: true
+						archiveArtifacts artifacts: "bin/Signing/Finished/**.*", fingerprint: true
+						archiveArtifacts artifacts: "../CertGui/bin/Signing/Finished/**.*", fingerprint: true
 					}
 				}
 			}
