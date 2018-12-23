@@ -26,7 +26,7 @@ $body = '{' +
 
 $release = (Invoke-RestMethod -Uri $releaseURL -Method 'Post' -Body $body -Headers @{"Content-Type" = "application/json"})
 
-foreach ($filepath in $filepaths.Split(",") {
+foreach ($filepath in $filepaths.Split(",")) {
 
     $filepath = (Resolve-Path $filepath).path
     $filename = $filepath.Split("\")[-1]
