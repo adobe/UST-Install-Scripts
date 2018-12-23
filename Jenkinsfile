@@ -2,7 +2,7 @@ pipeline {
 	agent any
 	environment {
 		msi_file = 'Installer/bin/Signing/Finished/AdobeUSTSetup.msi'
-		cert_file = 'CertGui/bin/Signing/Finished/adobeio-certgen.zip'
+		cert_file = 'CertGui/bin/Signing/Finished/AdobeIOCertgen.zip'
 	}
 	stages {
 		stage('Configure') {
