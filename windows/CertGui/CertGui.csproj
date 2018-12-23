@@ -100,7 +100,7 @@
     <PostBuildEvent>..\..\..\..\Installer\conf\ILMerge.exe /target:winexe /out:adobeio-certgen.exe certgen.exe BouncyCastle.Crypto.dll AdobeCertGen.dll
 copy certgen.exe.config adobeio-certgen.exe.config /Y
 
-
-</PostBuildEvent>
+copy adobeio-certgen.exe ..\..\..\..\Installer\files\PreMapped\Utils\Certgen
+copy adobeio-certgen.exe.config ..\..\..\..\Installer\files\PreMapped\Utils\Certgen</PostBuildEvent>
   </PropertyGroup>
 </Project>
