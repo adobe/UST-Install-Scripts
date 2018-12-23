@@ -228,8 +228,8 @@ function BuildCertGui {
     $signed = ("$signfolder\" + $options['signing']['finished_dir'])
     $unsigned = ("$signfolder\" + $options['signing']['unsigned_dir'])
 
-    Copy-Item "bin\x64\Release\adobeio-certgen.exe" $unsigned
-    Copy-Item "bin\x64\Release\adobeio-certgen.exe.config" $unsigned
+    Copy-Item "bin\x64\Release\adobeio-certgen.exe" "$unsigned\AdobeIOCertgen.exe"
+    Copy-Item "bin\x64\Release\adobeio-certgen.exe.config" "$unsigned\AdobeIOCertgen.exe.config"
 
     if ($sign) {
         Sign $unsigned $signed "42151"        
@@ -238,7 +238,8 @@ function BuildCertGui {
     } 
 
     Copy-Item "$signed\*" "..\Installer\files\PreMapped\Utils\Certgen"
-    Start-Process -FilePath $options['7zPath'] -ArgumentList "a -tzip `"$signed\adobeio-certgen.zip`" `"$signed\*`"" -Wait -WindowStyle Hidden
+
+    Start-Process -FilePath $options['7zPath'] -ArgumentList "a -tzip `"$signed\AdobeIOCertgen.zip`" `"$signed\*`"" -Wait -WindowStyle Hidden
     Set-Location $cpath
 
 }

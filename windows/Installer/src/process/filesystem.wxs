@@ -63,7 +63,7 @@
         <Shortcut Id="CertgenShortcut"
           Name="Adobe.IO Certgen"
           Icon="CertgenIcon"
-          Target="[INSTALLDIR]\Utils\Certgen\adobeio-certgen.exe">
+          Target="[INSTALLDIR]\Utils\Certgen\AdobeIOCertgen.exe">
         </Shortcut>
       </Component>
     </DirectoryRef>
