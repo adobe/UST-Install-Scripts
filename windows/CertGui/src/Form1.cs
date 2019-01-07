@@ -34,7 +34,7 @@ namespace certgen
             this.outDir = defaultDirectory;
             countryCode.SelectedIndex = 0;
 
-            expDate.Value = DateTime.UtcNow.Date.AddYears(100);
+            expDate.Value = Util.GetInitialDate();
 
         }
 
@@ -74,7 +74,8 @@ namespace certgen
                     orgName.Text,
                     orgUnit.Text,
                     commonName.Text,
-                    emailAddress.Text
+                    emailAddress.Text,
+                    DateTime.Parse(expDate.Text).AddHours(1)
                     )));
 
 

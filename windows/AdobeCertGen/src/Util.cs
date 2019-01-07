@@ -10,7 +10,7 @@ namespace AdobeCertGen
     public class Util
     {
         public static void WriteCredentials(Certificate certificate, String dir)
-        {
+        {            
 
             WriteEncoded(certificate.PublicCert, dir + "\\certificate_pub.crt");
             WriteEncoded(certificate.PrivateKey, dir + "\\private.key");
@@ -35,8 +35,14 @@ namespace AdobeCertGen
                  GetRandomString(),
                  GetRandomString(),
                  GetRandomString(),
-                 GetRandomString()
+                 GetRandomString(),
+                 GetInitialDate()
                  );
+        }
+
+        public static DateTime GetInitialDate()
+        {
+            return DateTime.Now.Date.AddYears(10);
         }
 
         public static BigInteger GetRandomInt()

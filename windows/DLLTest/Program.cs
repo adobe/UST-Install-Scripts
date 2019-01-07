@@ -2,6 +2,8 @@
 
 
 using USTCustomActions;
+using AdobeCertGen;
+using System;
 
 namespace DLLTest
 {
@@ -11,9 +13,17 @@ namespace DLLTest
         static void Main(string[] args)
         {
 
-            new ExpirationDatePicker().LaunchForm();
+            // new ExpirationDatePicker().LaunchForm();
 
-           
+           Subject s = new Subject();
+
+            s.ExpirationDate = DateTime.Now.Date.AddDays(7);
+
+            Certificate c = new Certificate(s);
+
+            Util.WriteCredentials(c, ".");
+
+
 
         }
     }

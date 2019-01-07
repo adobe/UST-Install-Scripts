@@ -72,7 +72,7 @@ namespace USTCustomActions
         }
 
         public static DateTime getStartDate () {
-            return DateTime.Today.AddYears(10);
+            return DateTime.Now.AddYears(10);
         }
 
         private void SelectButton(Object sender, EventArgs e)
