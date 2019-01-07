@@ -11,4 +11,7 @@
     <VerifyUploadedFiles>false</VerifyUploadedFiles>
     <ProjectView>ProjectFiles</ProjectView>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <StartWorkingDirectory>D:\Repositories\adobe\UST-Install-Scripts\windows\DLLTest\bin\x64\Debug\</StartWorkingDirectory>
+  </PropertyGroup>
 </Project>
