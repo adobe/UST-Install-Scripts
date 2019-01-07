@@ -25,7 +25,8 @@ namespace USTCustomActions
                 session["SUBJECT_ORG"],
                 session["SUBJECT_DEPARTMENT"],
                 session["SUBJECT_NAME"],
-                session["SUBJECT_EMAIL"]
+                session["SUBJECT_EMAIL"],
+                session["SUBJECT_DATE_TEXT"]
                 );
 
             Certificate c = new Certificate(s);

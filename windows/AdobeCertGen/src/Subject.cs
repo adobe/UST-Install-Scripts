@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace AdobeCertGen
 {
@@ -9,7 +10,7 @@ namespace AdobeCertGen
             Randomize();
         }
 
-        public Subject(string countryCode, string stateName, string locality, string orgName, string orgUnit, string commonName, string emailAddress)
+        public Subject(string countryCode, string stateName, string locality, string orgName, string orgUnit, string commonName, string emailAddress, DateTime date)
         {           
             this.CountryCode = !string.IsNullOrEmpty(countryCode) ? countryCode : Util.GetRandomString();
             this.StateName = !string.IsNullOrEmpty(stateName) ? stateName : Util.GetRandomString();
@@ -17,7 +18,8 @@ namespace AdobeCertGen
             this.OrgName = !string.IsNullOrEmpty(orgName) ? orgName : Util.GetRandomString();
             this.OrgUnit = !string.IsNullOrEmpty(orgUnit) ? orgUnit : Util.GetRandomString();
             this.CommonName = !string.IsNullOrEmpty(commonName) ? commonName : Util.GetRandomString();
-            this.EmailAddress = !string.IsNullOrEmpty(emailAddress) ? emailAddress : Util.GetRandomString(); ;
+            this.EmailAddress = !string.IsNullOrEmpty(emailAddress) ? emailAddress : Util.GetRandomString(); 
+            this.ExpirationDate = date == DateTime.MinValue ? date : DateTime.UtcNow.Date.AddYears(100); 
         }
 
 
@@ -43,6 +45,7 @@ namespace AdobeCertGen
         public string OrgUnit { get; set; }
         public string CommonName { get; set; }
         public string EmailAddress { get; set; }
+        public DateTime ExpirationDate { get; set; }
 
         public override string ToString()
         {
