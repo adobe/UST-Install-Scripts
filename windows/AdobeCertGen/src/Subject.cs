@@ -19,13 +19,13 @@ namespace AdobeCertGen
             this.OrgUnit = !string.IsNullOrEmpty(orgUnit) ? orgUnit : Util.GetRandomString();
             this.CommonName = !string.IsNullOrEmpty(commonName) ? commonName : Util.GetRandomString();
             this.EmailAddress = !string.IsNullOrEmpty(emailAddress) ? emailAddress : Util.GetRandomString(); 
-            this.ExpirationDate = date == DateTime.MinValue ? date : DateTime.UtcNow.Date.AddYears(100); 
+            this.ExpirationDate = date; 
         }
 
 
         private void Randomize()
         {
-            Subject s = Util.GetRandomSubject();
+            Subject s = Util.GetRandomSubject();      
 
             this.CountryCode = s.CountryCode;
             this.StateName = s.StateName;
@@ -34,6 +34,7 @@ namespace AdobeCertGen
             this.OrgUnit = s.OrgUnit;
             this.CommonName = s.CommonName;
             this.EmailAddress = s.EmailAddress;
+            this.ExpirationDate = Util.GetInitialDate();
 
         }
 
@@ -62,12 +63,13 @@ namespace AdobeCertGen
                    OrgName == subject.OrgName &&
                    OrgUnit == subject.OrgUnit &&
                    CommonName == subject.CommonName &&
-                   EmailAddress == subject.EmailAddress;
+                   EmailAddress == subject.EmailAddress &&
+                   ExpirationDate == subject.ExpirationDate;
         }
 
         public override int GetHashCode()
         {
-            var hashCode = -1858302934;
+            var hashCode = 1167983894;
             hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(CountryCode);
             hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(StateName);
             hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Locality);
@@ -75,10 +77,9 @@ namespace AdobeCertGen
             hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(OrgUnit);
             hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(CommonName);
             hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(EmailAddress);
+            hashCode = hashCode * -1521134295 + ExpirationDate.GetHashCode();
             return hashCode;
         }
-
-
 
     }
 

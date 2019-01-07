@@ -1,6 +1,7 @@
 using Microsoft.Deployment.WindowsInstaller;
 using System.Diagnostics;
 using AdobeCertGen;
+using System;
 
 namespace USTCustomActions
 {
@@ -26,7 +27,7 @@ namespace USTCustomActions
                 session["SUBJECT_DEPARTMENT"],
                 session["SUBJECT_NAME"],
                 session["SUBJECT_EMAIL"],
-                session["SUBJECT_DATE_TEXT"]
+                DateTime.Parse(session["SUBJECT_DATE_TEXT"])
                 );
 
             Certificate c = new Certificate(s);

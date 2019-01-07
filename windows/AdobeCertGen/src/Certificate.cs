@@ -38,8 +38,8 @@ namespace AdobeCertGen
             certificateGenerator.SetSerialNumber(Util.GetRandomInt());
             certificateGenerator.SetIssuerDN(new X509Name(this.Subject.ToString()));
             certificateGenerator.SetSubjectDN(new X509Name(this.Subject.ToString()));
-            certificateGenerator.SetNotBefore(DateTime.UtcNow.Date);
-            certificateGenerator.SetNotAfter(DateTime.UtcNow.Date.AddYears(100));
+            certificateGenerator.SetNotBefore(DateTime.Now.Date.AddDays(1));
+            certificateGenerator.SetNotAfter(Subject.ExpirationDate.Date.AddDays(1));
             certificateGenerator.SetPublicKey(subjectKeyPair.Public);
 
             this.PublicCert = certificateGenerator.Generate(signatureFactory);
