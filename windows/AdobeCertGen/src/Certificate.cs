@@ -38,7 +38,7 @@ namespace AdobeCertGen
             certificateGenerator.SetSerialNumber(Util.GetRandomInt());
             certificateGenerator.SetIssuerDN(new X509Name(this.Subject.ToString()));
             certificateGenerator.SetSubjectDN(new X509Name(this.Subject.ToString()));
-            certificateGenerator.SetNotBefore(DateTime.Now.Date.AddDays(1));
+            certificateGenerator.SetNotBefore(DateTime.Now.Date);
             certificateGenerator.SetNotAfter(Subject.ExpirationDate.Date.AddDays(1));
             certificateGenerator.SetPublicKey(subjectKeyPair.Public);
 
