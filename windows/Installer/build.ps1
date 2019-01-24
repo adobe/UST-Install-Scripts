@@ -32,7 +32,7 @@ $options = @{
     'uri_cfg' = 'https://api.github.com/repos/adobe/ust-configapp/releases'
     'uri_ust' = 'https://api.github.com/repos/adobe-apiplatform/user-sync.py/releases'
     'python_urls' =  @{
-        '3.6' = 'https://www.python.org/ftp/python/3.6.7/python-3.6.7-amd64.exe'    
+        '3.6' = 'https://www.python.org/ftp/python/3.6.8/python-3.6.8-amd64.exe'    
         '2.7' = 'https://www.python.org/ftp/python/2.7.15/python-2.7.15.amd64.msi'    
     }
     'signing' = @{
