@@ -45,17 +45,17 @@ $options = @{
 
 
 $current_cfg = @{
-    'USTVersion' = 'v2.3'
+    'USTVersion' = 'v2.4'
     'GUILink' = 'https://github.com/adobe/ust-configapp/releases/download/v1.0.3/Adobe.UST.Configuration.App.exe'
     'GUIVersion' = 'v1.0.3'
-    'ExamplesLink' = 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4rc2/examples.tar.gz'
+    'ExamplesLink' = 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/examples.zip'
     'NotepadLink' = 'https://notepad-plus-plus.org/repository/7.x/7.6.1/npp.7.6.1.bin.minimalist.7z'
     'VcRedistLink' = 'https://download.microsoft.com/download/9/1/4/914851c6-9141-443b-bdb4-8bad3a57bea9/vcredist_x64.exe'
     'Binaries' = @{
         '2.7' = @{'PythonLink' = $options['python_urls']['2.7']
-                'USTLink' = 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.3/user-sync-v2.3-win64-py2715.tar.gz'}
+                'USTLink' = 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-win64-py2715.zip'}
         '3.6' = @{'PythonLink' = $options['python_urls']['3.6']
-                'USTLink' = 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.3/user-sync-v2.3-win64-py365.tar.gz'}
+                'USTLink' = 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-win64-py366.zip'}
     }			
 }	
 
