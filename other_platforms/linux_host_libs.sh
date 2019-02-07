@@ -150,7 +150,7 @@ function isPyVersionInstalled(){
 
 function loadUbuntuResources(){
 
-    # Note that version 2.3 releases on python 3.6, but 2.2.2 releases on 3.5.  This simple difference adds another level of
+    # Note that version 2.3 releases on python 3.6, but 2.2.2 releases on 3.5.  This simple difference adds another level olsf
     # dimensionality and complexity to the decision space.
     if [[ $ustVer == "2.3" ]]; then
         # UST Version 2.3 Links
@@ -450,84 +450,6 @@ function loadFedoraRedhatResources(){
     return 0
 }
 
-function loadMacOsResources(){
-
-    if [[ $ustVer == "2.3" ]]; then
-        # UST Version 2.3 Links
-        USTPython2URL="https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.3/user-sync-v2.3-macosx-py2715.tar.gz"
-        USTPython3URL="https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.3/user-sync-v2.3-macosx-py370.tar.gz"
-    else
-        # UST Version 2.2.2 Links
-        USTPython2URL="https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.2.2/user-sync-v2.2.2-macosx-py2714.tar.gz"
-        USTPython3URL="https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.2.2/user-sync-v2.2.2-macosx-py363.tar.gz"
-    fi
-
-    function installPython27(){
-        printColorOS "Installing Python 2.7..."
-        $installString python2 &> /dev/null
-        pyCommand="python2.7"
-    }
-
-    function installPython36(){
-        printColorOS "Installing Python 3.7..."
-        $installString python3 &> /dev/null
-        pyCommand="python3.7"
-    }
-
-    function installPython3(){
-        installPython36
-    }
-
-    function choosePythonVersion(){
-        py3V="3.7"
-        $(isPyVersionInstalled $py3V) && pyversion=3 || pyversion=2
-        if $installPython || $offlinePyUpdate ; then pyversion=3; fi
-        if ! $offlinePyUpdate && $offlineMode ; then pyversion=3; fi
-    }
-
-    return 0
-}
-
-
-function loadSuseResources(){
-
-    if [[ $ustVer == "2.3" ]]; then
-        # UST Version 2.3 Links
-        USTPython2URL="https://github.com/janssenda-adobe/ust-unofficial/raw/master/user-sync-v2.3-sles12sp3-py279.tar.gz"
-        USTPython3URL="https://github.com/janssenda-adobe/ust-unofficial/raw/master/user-sync-v2.3-sles12sp3-py346.tar.gz"
-    else
-        # UST Version 2.2.2 Links
-        USTPython2URL="https://github.com/janssenda-adobe/ust-unofficial/raw/master/user-sync-v2.2.2-sles12sp3-py279.tar.gz"
-        USTPython3URL="https://github.com/janssenda-adobe/ust-unofficial/raw/master/user-sync-v2.2.2-sles12sp3-py346.tar.gz"
-    fi
-
-    function installPython27(){
-        printColorOS "Installing Python 2.7..."
-        $installString python &> /dev/null
-        pyCommand="python"
-    }
-
-    function installPython34(){
-        printColorOS "Installing Python 3.4..."
-        $installString python3 &> /dev/null
-        pyCommand="python3"
-    }
-
-    function installPython3(){
-        installPython34
-    }
-
-    function choosePythonVersion(){
-        py3V="3.4"
-        $(isPyVersionInstalled $py3V) && pyversion=3 || pyversion=2
-        if $installPython || $offlinePyUpdate ; then pyversion=3; fi
-        if ! $offlinePyUpdate && $offlineMode ; then pyversion=2; fi
-    }
-
-    return 0
-}
-
-
 function loadRaspbianResources(){
 
     if [[ $ustVer == "2.3" ]]; then
@@ -538,45 +460,6 @@ function loadRaspbianResources(){
         # UST Version 2.2.2 Links
         USTPython2URL="https://github.com/janssenda-adobe/ust-unofficial/raw/master/user-sync-v2.2.2-rasp-9-py2713.tar.gz"
         USTPython3URL="https://github.com/janssenda-adobe/ust-unofficial/raw/master/user-sync-v2.2.2-rasp-9-py353.tar.gz"
-    fi
-
-    function installPython27(){
-        printColorOS "Installing Python 2.7..."
-        $installString python2.7 &> /dev/null
-        pyCommand="python2.7"
-    }
-
-    function installPython35(){
-        printColorOS "Installing Python 3.5..."
-        $installString python3.5 &> /dev/null
-        pyCommand="python3.5"
-    }
-
-    function installPython3(){
-        installPython35
-    }
-
-    function choosePythonVersion(){
-        py3V="3.5"
-        $(isPyVersionInstalled $py3V) && pyversion=3 || pyversion=2
-        if $installPython || $offlinePyUpdate ; then pyversion=3; fi
-        if ! $offlinePyUpdate && $offlineMode ; then pyversion=2; fi
-    }
-
-    return 0
-}
-
-
-function loadDebianResources(){
-
-    if [[ $ustVer == "2.3" ]]; then
-        # UST Version 2.3 Links
-        USTPython2URL="https://github.com/janssenda-adobe/ust-unofficial/raw/master/user-sync-v2.3-debian-9-py2713.tar.gz"
-        USTPython3URL="https://github.com/janssenda-adobe/ust-unofficial/raw/master/user-sync-v2.3-debian-9-py353.tar.gz"
-    else
-        # UST Version 2.2.2 Links
-        USTPython2URL="https://github.com/janssenda-adobe/ust-unofficial/raw/master/user-sync-v2.2.2-debian-9-py2713.tar.gz"
-        USTPython3URL="https://github.com/janssenda-adobe/ust-unofficial/raw/master/user-sync-v2.2.2-debian-9-py353.tar.gz"
     fi
 
     function installPython27(){

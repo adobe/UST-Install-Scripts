@@ -63,17 +63,6 @@ case $key in
         offlineMode=true
         installParams+=("--offline")
         shift ;;
-    --ust-version)
-        if [[ $2 == "2.2.2" || $2 == "2.3" ]]; then
-            ustVer=$2
-            installParams+=("--ust-version $2")
-        else
-            echo "Version '$2' - Invalid version (2.2.2 or 2.3 only)"
-            exit
-        fi
-        shift # past argument
-        shift # past value
-        ;;
     *)
         echo "Parameter '$1' not recognized"
         exit
@@ -82,15 +71,6 @@ case $key in
 esac
 done
 
-# Sets the default values for the example configurations.  These are specified here since they are platform independent, and
-# provide context for setting up the User Sync installation environment in the case that user sync is not yet available
-# on the current platform. These values are superceded by those in the linux host libs script for supported hosts.
-
-case $ustVer in
-    "2.2.2") USTExamplesURL="https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.2.2/example-configurations.tar.gz";;
-      "2.3") USTExamplesURL="https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.3/example-configurations.tar.gz";;
-          *) echo "Version '$ustVer' - Invalid version (2.2.2 or 2.3 only)"; exit;;
-esac
 ########################################################################################################################
 
 # Simple functions for making bash beautiful :)
@@ -188,6 +168,38 @@ function banner(){
 }
 
 
+
+# Sets the default values for the example configurations.  These are specified here since they are platform independent, and
+# provide context for setting up the User Sync installation environment in the case that user sync is not yet available
+# on the current platform. These values are superceded by those in the linux host libs script for supported hosts.
+USTExamplesURL="https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/examples.tar.gz"
+
+function getResourceList(){    
+
+    config['platform']=$1
+    config['examples_url']="https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/examples.tar.gz"
+
+    case $1 in
+        *untu*)
+            config['ust_py3_url']="https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-ubuntu1604-py367.tar.gz"   
+            config['ust_py2_url']="https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-ubuntu1604-py2715.tar.gz"   
+            ;;
+        *fedora*|*cent*|*red*)
+            config['ust_py3_url']="https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-centos7-py367.tar.gz" 
+            config['ust_py2_url']="https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-centos7-py275.tar.gz"
+            ;;
+    esac
+}
+
+declare -A config
+getResourceList "redhat"
+
+for e in "${!config[@]}"; do echo "$e: ${config[$e]}"; done
+
+exit
+
+
+
 ########################################################################################################################
 
 # Utility methods
@@ -233,7 +245,6 @@ function download(){
 function installPackage(){
 
     if ! $installString $1 &> /dev/null; then
-
         if $isMacOs; then
             if  ! brew upgrade $1 &> /dev/null; then
                 printColorOS "Install error - $1 may be up to date..."
@@ -241,7 +252,6 @@ function installPackage(){
         else
             printColorOS "Error installing $1... install will continue..." yellow
         fi
-
         installWarnings=true
     fi
 
@@ -291,7 +301,7 @@ function package(){
 # exists prior to creation.  This helps to keep things clean.
 
 function configureInstallDirectory(){
-    USTInstallDir="${PWD}/User-Sync-${ustVer}"
+    USTInstallDir="${PWD}/Adobe_User_Sync_Tool"
     if [[ -d "${USTInstallDir}" ]]; then
         rm -rf "${USTInstallDir}"
     fi
@@ -352,27 +362,21 @@ function getUSTFiles(){
     # If $getUST is set to true by the getHost method, it means that the platform has been successfully identified as a supported
     # version, and the resources have been fetched.  This means we know which version of user-sync.pex to get, so we can go ahead and do it.
 
-    if $getUST; then
+    # Set URL according to python version
+    [[ $pyversion -eq 2 ]] && USTUrl=$USTPython2URL || USTUrl=$USTPython3URL
 
-        # Set URL according to python version
-        [[ $pyversion -eq 2 ]] && USTUrl=$USTPython2URL || USTUrl=$USTPython3URL
+    # Check UST version
+    [[ $USTUrl =~ "v".+"/" ]]
+    IFS='/' read -r -a array <<< "$BASH_REMATCH"
+    USTVersion=${array[0]}
 
-        # Check UST version
-        [[ $USTUrl =~ "v".+"/" ]]
-        IFS='/' read -r -a array <<< "$BASH_REMATCH"
-        USTVersion=${array[0]}
+    banner -m "Configuring UST"
 
-        banner -m "Configuring UST"
-
-        printColorOS "Using directory $(tput setaf 3)$USTFolder$(tput sgr 0)..."
-        printColorOS "Downloading UST $USTVersion...$(tput setaf 5)($USTUrl)$(tput sgr 0)"
-        USTArch=$(download $USTUrl)
-        validateDownload $USTArch
-        extractArchive $USTArch "$USTFolder"
-
-    else
-        printColor "\n- UST will not be downloaded - host version could not be determined.  Please download manually...\n" yellow
-    fi
+    printColorOS "Using directory $(tput setaf 3)$USTFolder$(tput sgr 0)..."
+    printColorOS "Downloading UST $USTVersion...$(tput setaf 5)($USTUrl)$(tput sgr 0)"
+    USTArch=$(download $USTUrl)
+    validateDownload $USTArch
+    extractArchive $USTArch "$USTFolder"
 
     # Regardless of whether we have user-sync.pex, we can still proceed to construct the remainder of the environment.  Here we get the
     # examples archive and use it to build the install directory.
@@ -387,9 +391,9 @@ function getUSTFiles(){
     # Create the usable versions of the config files by copying them to the install directory
     if extractArchive $EXArch "$USTFolder"; then
         printColorOS "Copying configuration files..."
-        cp "$USTFolder/examples/config files - basic/1 user-sync-config.yml" "$USTFolder/user-sync-config.yml"
-        cp "$USTFolder/examples/config files - basic/2 connector-umapi.yml" "$USTFolder/connector-umapi.yml"
-        cp "$USTFolder/examples/config files - basic/3 connector-ldap.yml" "$USTFolder/connector-ldap.yml"
+        cp "$USTFolder/examples/config files - basic/user-sync-config.yml" "$USTFolder/user-sync-config.yml"
+        cp "$USTFolder/examples/config files - basic/connector-umapi.yml" "$USTFolder/connector-umapi.yml"
+        cp "$USTFolder/examples/config files - basic/connector-ldap.yml" "$USTFolder/connector-ldap.yml"
     fi
 
     # Clean up the downloaded .tar.gz files
@@ -495,60 +499,60 @@ function getHost(){
     # Before executing any searches, we must determine whether the host is MacOS. This is because MacOS reports host and version
     # information differently from Linux.  To do so, we use sw_vers, which is a MacOS only command that gets a neat output of
     # the requested information.  If the command returns success (exit code 0), we know the host is MacOS!
-    [[ -x "$(command -v sw_vers)" ]] && isMacOs=true || isMacOs=false
+    # [[ -x "$(command -v sw_vers)" ]] && isMacOs=true || isMacOs=false
 
     # Targeted MacOS specific version of the above getParam algorightms, keyed to match output from sw_vers.
     # Much more concise and straightforward!
-    if $isMacOs; then
-        fullName=$(sw_vers | grep -Eo '(Mac).*')
-        numericalVersion=$(sw_vers | grep -Eo '\d{1,2}(\.).*')
-        hostVersion=$(echo $numericalVersion | grep -Eo '^\d{1,2}')
+    # if $isMacOs; then
+    #     fullName=$(sw_vers | grep -Eo '(Mac).*')
+    #     numericalVersion=$(sw_vers | grep -Eo '\d{1,2}(\.).*')
+    #     hostVersion=$(echo $numericalVersion | grep -Eo '^\d{1,2}')
 
     # If NOT MacOS, use the Linx algorithms as described above.
-    else
-        fullName=$(getParam "NAME")
-        numericalVersion=$(getParam "VERSION")
+    # else
+    fullName=$(getParam "NAME")
+    numericalVersion=$(getParam "VERSION")
 
-        # See if $fullName was correctly deduced (assumes byte count less than 3 contains no or incorrect data).
-        # If $fullName is wrong, we make a sweeping attempt to get something for it by blindly grabbing the first
-        # line of cat /etc/*release.  At least then we can get SOME useful output instead of nothing.
-        if [[ $(echo $fullName | wc -c) -lt 3 ]]; then
-            fullName=$(getParam "DISTRIB_ID")
-        fi
-
-        if [[ $(echo $fullName | wc -c) -lt 3 ]]; then
-            fullName=$(cat /etc/*release | grep -Po '\A.*')
-            fullName=$(filterString "$fullName")
-        fi
-
-        # Same as above: check if $numericalVersion contains information.  If not, we make a blind guess that
-        # the $fullName contains the version number within it.  If not, we are out of luck!! :(
-        if [[ $(echo $numericalVersion | wc -c) -lt 3 ]]; then
-            numericalVersion=$(getParam "DISTRIB_RELEASE")
-        fi
-
-        if [[ $(echo $numericalVersion | wc -c) -lt 1 ]]; then
-            numericalVersion=$(echo $fullName | grep -Po '\d.+?(?=\s)')
-            numericalVersion=$(filterString "$numericalVersion")
-        fi
-
-
-        # The hostVersion is the MAJOR version number only (so for Ubuntu 16.04, hostVersion = 16).  This is helpful
-        # in narrowing down platform choices in the host libs without worrying about comparing minor versions, which may
-        # or may not be compared easily mathematically (for example, you cannot ask: 13.5.16 > 12.2 because it does not
-        # make any mathematical sense, but it's very plain to say that 13 > 12).
-
-        # For the most part, the major version is the significant factor with regards to whether packages or User-Sync will
-        # run, whereas minor versions tend not to impact those bigger picture items.
-
-        # NOTE: THIS IS THE HOSTVERSION WHICH WILL BE COMPARED TO minVersion AS SHOWN BELOW! In the case that the hostVersion
-        # was note correctly determined but the host name WAS (very unlikely scenario), then the script will assume the minVersion
-        # requirements for that platform were not met and will not run. Again, this should probably not happen for any supported
-        # platform version.
-
-        hostVersion=$(echo $numericalVersion | grep -Po '(?<!.)\d+(?=(\.|$|\s))')
-
+    # See if $fullName was correctly deduced (assumes byte count less than 3 contains no or incorrect data).
+    # If $fullName is wrong, we make a sweeping attempt to get something for it by blindly grabbing the first
+    # line of cat /etc/*release.  At least then we can get SOME useful output instead of nothing.
+    if [[ $(echo $fullName | wc -c) -lt 3 ]]; then
+        fullName=$(getParam "DISTRIB_ID")
     fi
+
+    if [[ $(echo $fullName | wc -c) -lt 3 ]]; then
+        fullName=$(cat /etc/*release | grep -Po '\A.*')
+        fullName=$(filterString "$fullName")
+    fi
+
+    # Same as above: check if $numericalVersion contains information.  If not, we make a blind guess that
+    # the $fullName contains the version number within it.  If not, we are out of luck!! :(
+    if [[ $(echo $numericalVersion | wc -c) -lt 3 ]]; then
+        numericalVersion=$(getParam "DISTRIB_RELEASE")
+    fi
+
+    if [[ $(echo $numericalVersion | wc -c) -lt 1 ]]; then
+        numericalVersion=$(echo $fullName | grep -Po '\d.+?(?=\s)')
+        numericalVersion=$(filterString "$numericalVersion")
+    fi
+
+
+    # The hostVersion is the MAJOR version number only (so for Ubuntu 16.04, hostVersion = 16).  This is helpful
+    # in narrowing down platform choices in the host libs without worrying about comparing minor versions, which may
+    # or may not be compared easily mathematically (for example, you cannot ask: 13.5.16 > 12.2 because it does not
+    # make any mathematical sense, but it's very plain to say that 13 > 12).
+
+    # For the most part, the major version is the significant factor with regards to whether packages or User-Sync will
+    # run, whereas minor versions tend not to impact those bigger picture items.
+
+    # NOTE: THIS IS THE HOSTVERSION WHICH WILL BE COMPARED TO minVersion AS SHOWN BELOW! In the case that the hostVersion
+    # was note correctly determined but the host name WAS (very unlikely scenario), then the script will assume the minVersion
+    # requirements for that platform were not met and will not run. Again, this should probably not happen for any supported
+    # platform version.
+
+    hostVersion=$(echo $numericalVersion | grep -Po '(?<!.)\d+(?=(\.|$|\s))')
+
+    # fi
 
 
     # Here we determine which platform-specific data to used based on the above results.  If the $fullName was not obtained or was
@@ -563,7 +567,7 @@ function getHost(){
             loadResources=loadUbuntuResources
             packageList=(openssl libssl-dev)
         ;;
-        *cent*)
+        *cent*|*red*)
             installString="yum -y install"
             minVersion="7"
             updateCmd="yum check-update"
@@ -577,41 +581,6 @@ function getHost(){
             loadResources=loadFedoraRedhatResources
             packageList=(openssl)
         ;;
-        *red*)
-            installString="yum -y install"
-            minVersion="7"
-            updateCmd="yum check-update"
-            loadResources=loadFedoraRedhatResources
-            packageList=(openssl)
-        ;;
-        *opensuse*)
-            installString="zypper -n install"
-            minVersion="42"
-            updateCmd="zypper refresh"
-            loadResources=loadSuseResources
-            packageList=(openssl)
-        ;;
-        *sles*|*suse*)
-            installString="zypper -n install"
-            minVersion="12"
-            updateCmd="zypper refresh"
-            loadResources=loadSuseResources
-            packageList=(openssl)
-        ;;
-        *mac*)
-            installString="brew install"
-            minVersion="10"
-            updateCmd="brew update -n --force"
-            loadResources=loadMacOsResources
-            packageList=(openssl)
-        ;;
-        *deb*)
-            installString="apt-get --force-yes -y install"
-            minVersion="9"
-            updateCmd="apt-get update"
-            loadResources=loadDebianResources
-            packageList=(openssl)
-        ;;
         *rasp*)
             installString="apt-get --force-yes -y install"
             minVersion="9"
@@ -620,10 +589,8 @@ function getHost(){
             packageList=(openssl)
         ;;
         *)
-            installString="skip"
-            minVersion="0"
-            hostVersion="1"
-            loadResources=false
+            printColor "- $fullName is not a supported platform..." red
+            exit
         ;;
     esac
 
@@ -632,12 +599,12 @@ function getHost(){
    # into the current memory scope for the remainder of the primary script, without introducing the bulk of the libraries as additional
    # inline code.
 
-   wget -q $libURL -O temp.sh
-   source temp.sh
-   rm temp.sh
+#    wget -q $libURL -O temp.sh
+#    source temp.sh
+#    rm temp.sh
 
 #   Used for locally testing the libraries.  Only useful for testing
-#     source linux_host_libs_v2.5.sh
+     source linux_host_libs.sh
 
 }
 
@@ -658,17 +625,17 @@ function main(){
 
     # If the platform is MacOS, we must run as a normal user.  Since the default run string for the script on the home page is sudo
     # preceeded, we must intentionally restart the script here using regular user privileges.
-    if [[ "$EUID" -eq 0 && $isMacOs == true ]]; then
-        printColorOS "Restarting as non root... " yellow
-        insStr=$(echo "sh -c 'wget -O ins.sh $instURL &> /dev/null; chmod 777 ins.sh; ./ins.sh  ${installParams[@]};'")
-        sudo -u $SUDO_USER bash -c "$insStr"
-        exit
-    fi
+    # if [[ "$EUID" -eq 0 && $isMacOs == true ]]; then
+    #     printColorOS "Restarting as non root... " yellow
+    #     insStr=$(echo "sh -c 'wget -O ins.sh $instURL &> /dev/null; chmod 777 ins.sh; ./ins.sh  ${installParams[@]};'")
+    #     sudo -u $SUDO_USER bash -c "$insStr"
+    #     exit
+    # fi
 
     printUSTBanner
 
     # If for some reason the script was not run as sudo and the host is not MacOS, we inform the user to re-run as root.
-    if [[ "$EUID" -ne 0 && $isMacOs == false ]]; then
+    if [[ "$EUID" -ne 0 ]]; then
         printColorOS "Please re-run with sudo... \n" yellow
         exit
     fi
@@ -685,29 +652,23 @@ function main(){
     # choosePythonVersion can be run (which resides in the libraries).  If loadResources returns false, the user is notified but the
     # installer continues as normal anyways.
 
-    if $loadResources; then
-        getUST=true
-        choosePythonVersion
-    else
-        printColorOS "Warning! Failed to read platform library, defaulting to generic install..." yellow
-        printColorOS "Python will not be installed..." yellow
-        installPython=false
-        getUST=false
-    fi
+    $loadResources
+    choosePythonVersion
 
     # $py3V is defined in host libs, and is set to the appropriate version depending on host and User-Sync versions.  Either 3.5 or 3.6.
     [[ $pyversion == "3" ]] && fullPyVersion=$py3V || fullPyVersion="2.7"
 
     printf " *** Parameters *** \n\n"
     printf -- "- Python:       "; printColor $fullPyVersion green
-    printf -- "- Get Python:   "; printColor $installPython green
+    #printf -- "- Get Python:   "; printColor $installPython green
     printf -- "- UST Version:  "; printColor $ustVer green
     printf -- "- Offline Mode: "; printColor $offlineMode green
 
 
     # Install packages if a package manager has been specified
-    [[ $installString != "skip" && $getUST == "true" ]] && getPackages
-
+    #[[ $installString != "skip" && $getUST == "true" ]] && getPackages
+    getPackages
+    
     # Create the install directory, and then download and extract the UST files into the install directory
     getUSTFiles "$(configureInstallDirectory)"
 
