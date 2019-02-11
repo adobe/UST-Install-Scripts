@@ -8,3 +8,4 @@ required_resources.wxs
 USTCustomActions.CA.dll
 
 files/
+*log

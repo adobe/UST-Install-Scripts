@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 # Copyright 2018 Adobe. All rights reserved.
 # This file is licensed to you under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License. You may obtain a copy
@@ -39,11 +38,14 @@ libURL="https://raw.githubusercontent.com/adobe/UST-Install-Scripts/master/other
 # Default version of UST to be installed.  This can be overridden by the command line argument --ust-version
 # The previous release (2.2.2) is available as a backup
 
-ustVer="2.3"
+ustVer="2.4"
 
 # Default Python level. This should be left as is, since python versioning is built into the script
 
 pyversion="2"
+
+log_level="DEBUG"
+log_filename="install.log"
 
 ########################################################################################################################
 
@@ -75,27 +77,26 @@ done
 
 # Simple functions for making bash beautiful :)
 
-# Color printing - supported on all modern bash shells
-function printColor(){
+log() {
 
-    case $2 in
-        "black") col=0;;
-          "red") col=1;;
-        "green") col=2;;
-       "yellow") col=3;;
-         "blue") col=4;;
-      "magenta") col=5;;
-         "cyan") col=6;;
-        "white") col=7;;
-              *) col=7;;
-    esac
+    local log_text="$1"
+    local log_level="$2"
+    local log_color="$3"
 
-    printf "$(tput setaf $col)$1$(tput sgr 0)\n"
+    # Default level to "info"
+    [[ -z ${log_level} ]] && log_level="INFO";
+    [[ -z ${log_color} ]] && log_color="\033[0m";
+
+    entry="[$(date +"%Y-%m-%d %H:%M:%S %Z")] [${log_level}] - ${log_text}"; 
+    echo -e $"${log_color}$entry\033[0m"   
 }
 
-function printColorOS(){
-    printColor "- $1" $2
-}
+log_info()      { log "$@"; }
+log_success()   { log "$1" "SUCCESS" "\033[1;32m"; }
+log_error()     { log "$1" "ERROR" "\033[1;31m"; }
+log_warning()   { log "$1" "WARNING" "\033[1;33m"; }
+log_debug()     { [[ "$log_level" = "DEBUG" ]] && log "$1" "DEBUG" "\033[1;34m"; }
+
 
 # Custom colored banner.  $fullname $numericalVersion are determined prior to printing this.  $fullname and $numericalVersion
 # represent the name of the host platform and its version.  These values are detailed more below in the getHost method.
@@ -120,55 +121,6 @@ EOM
 
 }
 
-
-# Prints a simple banner with message - useful for keeping portions of output better organized
-# Available types are info, warning, and error.  These correspond to colors of green, yellow
-# and red respectively.  Color can be overridden with the -c argument.
-
-function banner(){
-
-    type="Info"
-    color="green"
-
-    while [[ $# -gt 0 ]]
-    do
-    key=$1
-    case $key in
-        -m|--message)
-        message=$2
-        shift # past argument
-        shift # past value
-        ;;
-        -t|--type)
-        type=$2
-        shift # past argument
-        shift # past value
-        ;;
-        -c|--color)
-        color=$2
-        shift # past argument
-        shift # past value
-        ;;
-    esac
-    done
-
-    if ! [[ $message = *[!\ ]* ]]; then message=${type}; fi
-
-    sep="$(printf -- '=%.0s' {1..20})"
-
-    if [[ $color == "green" ]]; then
-        case $type in
-            "Warning") color="yellow";;
-            "Error") color="red";;
-        esac
-    fi
-
-    printColor "\n$sep $message $sep" $color
-
-}
-
-
-
 # Sets the default values for the example configurations.  These are specified here since they are platform independent, and
 # provide context for setting up the User Sync installation environment in the case that user sync is not yet available
 # on the current platform. These values are superceded by those in the linux host libs script for supported hosts.
@@ -176,6 +128,8 @@ USTExamplesURL="https://github.com/adobe-apiplatform/user-sync.py/releases/downl
 
 function getResourceList(){    
 
+    config['offline']=$offlineMode
+    config['ust_version']=$ustVer
     config['platform']=$1
     config['examples_url']="https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/examples.tar.gz"
 
@@ -191,14 +145,6 @@ function getResourceList(){
     esac
 }
 
-declare -A config
-getResourceList "redhat"
-
-for e in "${!config[@]}"; do echo "$e: ${config[$e]}"; done
-
-
-
-
 
 ########################################################################################################################
 
@@ -212,7 +158,7 @@ for e in "${!config[@]}"; do echo "$e: ${config[$e]}"; done
 
 function validateDownload(){
     if [[ $(wc -c <$1) -le 10000 ]]; then
-        printColorOS "Download error!" red
+        log_info "Download error!"
         installWarnings=true
         return 2
     fi
@@ -247,10 +193,10 @@ function installPackage(){
     if ! $installString $1 &> /dev/null; then
         if $isMacOs; then
             if  ! brew upgrade $1 &> /dev/null; then
-                printColorOS "Install error - $1 may be up to date..."
+                log_info "Install error - $1 may be up to date..."
             fi
         else
-            printColorOS "Error installing $1... install will continue..." yellow
+            log_info "Error installing $1... install will continue..."
         fi
         installWarnings=true
     fi
@@ -266,10 +212,10 @@ function extractArchive(){
 
     sourceDir=$1
     destination=$2
-    printColorOS "Extracting $sourceDir to  $(tput setaf 3)$destination$(tput sgr 0)..."
+    log_info "Extracting $sourceDir to  $(tput setaf 3)$destination$(tput sgr 0)..."
 
     if ! tar -zxvf $sourceDir -C "$destination" &> /dev/null; then
-        printColorOS "Extraction error!" red
+        log_info "Extraction error!"
         installWarnings=true
         return 2
     fi
@@ -285,10 +231,10 @@ function package(){
 
     filename="UST_${ustVer}_py${fullPyVersion}.tar.gz"
     test -e $filename && rm $filename
-    printColorOS "Packaging $PWD/$filename..." green
+    log_info "Packaging $PWD/$filename..."
     tar -czf $filename -C "$USTFolder" .
     rm -rf "$USTFolder"
-    printColorOS "Package complete! You can now distribute $(tput setaf 5)$filename$(tput setaf 2) to your remote server!\n" green
+    log_info "Package complete! You can now distribute $(tput setaf 5)$filename$(tput setaf 2) to your remote server!"
 
 }
 
@@ -314,14 +260,14 @@ function configureInstallDirectory(){
 # method is only ever called if the --install-python argument is invoked on the main process.  The user is notified if python fails to install.
 
 function installPy(){
-    banner -m "Installing Python $fullPyVersion"
+    log_info "Installing Python $fullPyVersion"
 
     [[ $pyversion -eq 2 ]] && installPython27 || installPython3
 
     if [[ -x "$(command -v $pyCommand)" ]]; then
-        printColorOS "Python installed succesfully!" green
+        log_info "Python installed succesfully!"
     else
-        printColorOS "Python installation failed...\n- Consider using automatic versioning or install manually!" red
+        log_info "Python installation failed... Consider using automatic versioning or install manually!"
         installWarnings=true
     fi
 }
@@ -332,15 +278,15 @@ function installPy(){
 # the installPy method is called here if the user included the --install-python flag.
 
 function getPackages(){
-    banner -m "Installing Packages"
-    printColorOS "Updating repositories..."
+    log_info "Installing Packages"
+    log_info "Updating repositories..."
     $updateCmd &> /dev/null
 
     for i in ${packageList[@]}; do
-        printColorOS "Installing $i..."
+        log_info "Installing $i..."
         installPackage $i
     done
-    printColorOS "Prerequisites installed succesfully!" green
+    log_info "Prerequisites installed succesfully!"
     if $installPython; then installPy; fi
 }
 
@@ -370,10 +316,10 @@ function getUSTFiles(){
     IFS='/' read -r -a array <<< "$BASH_REMATCH"
     USTVersion=${array[0]}
 
-    banner -m "Configuring UST"
+    log_info "Configuring UST"
 
-    printColorOS "Using directory $(tput setaf 3)$USTFolder$(tput sgr 0)..."
-    printColorOS "Downloading UST $USTVersion...$(tput setaf 5)($USTUrl)$(tput sgr 0)"
+    log_info "Using directory $(tput setaf 3)$USTFolder$(tput sgr 0)..."
+    log_info "Downloading UST $USTVersion...$(tput setaf 5)($USTUrl)$(tput sgr 0)"
     USTArch=$(download $USTUrl)
     validateDownload $USTArch
     extractArchive $USTArch "$USTFolder"
@@ -381,29 +327,29 @@ function getUSTFiles(){
     # Regardless of whether we have user-sync.pex, we can still proceed to construct the remainder of the environment.  Here we get the
     # examples archive and use it to build the install directory.
 
-    printColorOS "Downloading UST Examples...$(tput setaf 5)($USTExamplesURL)$(tput sgr 0)"
+    log_info "Downloading UST Examples...$(tput setaf 5)($USTExamplesURL)$(tput sgr 0)"
     EXArch=$(download $USTExamplesURL)
     validateDownload $EXArch
 
-    printColorOS "Creating directory $(tput setaf 3)$USTFolder/examples$(tput sgr 0)..."
+    log_info "Creating directory $(tput setaf 3)$USTFolder/examples$(tput sgr 0)..."
     mkdir "$USTFolder/examples" &> /dev/null
 
     # Create the usable versions of the config files by copying them to the install directory
     if extractArchive $EXArch "$USTFolder"; then
-        printColorOS "Copying configuration files..."
+        log_info "Copying configuration files..."
         cp "$USTFolder/examples/config files - basic/user-sync-config.yml" "$USTFolder/user-sync-config.yml"
         cp "$USTFolder/examples/config files - basic/connector-umapi.yml" "$USTFolder/connector-umapi.yml"
         cp "$USTFolder/examples/config files - basic/connector-ldap.yml" "$USTFolder/connector-ldap.yml"
     fi
 
     # Clean up the downloaded .tar.gz files
-    printColorOS "Removing temporary files..."
+    log_info "Removing temporary files..."
     rm $USTArch $EXArch
 
     # Here we create some simple shell scripts for running UST in test and live mode with the commonly used flags of --users mapped and
     # --process-groups.  Refer to the User Sync documentation for more information.
 
-    printColorOS "Creating shell scripts for running UST..."
+    log_info "Creating shell scripts for running UST..."
     printf "#!/usr/bin/env bash\n./user-sync --users mapped --process-groups -t" > "$USTFolder/run-user-sync-test.sh"
     printf "#!/usr/bin/env bash\n./user-sync --users mapped --process-groups" > "$USTFolder/run-user-sync.sh"
 
@@ -411,11 +357,11 @@ function getUSTFiles(){
     # to the UMAPI. The default lifetime is set here for 9125 days (25 years) for convenience.  The shell script will prompt the users
     # for specific information, and the deposit certificate_pub.crt and private.key into the install directory.
 
-    printColorOS "Generating shell script for certificate generation..."
+    log_info "Generating shell script for certificate generation..."
     SSLString="openssl req -x509 -sha256 -nodes -days 9125 -newkey rsa:2048 -keyout private.key -out certificate_pub.crt"
     printf "#!/usr/bin/env bash\n$SSLString" > "$USTFolder/sslCertGen.sh"
 
-    printColorOS "UST installed succesfully!" green
+    log_info "UST installed succesfully!"
 
 }
 
@@ -589,7 +535,7 @@ function getHost(){
             packageList=(openssl)
         ;;
         *)
-            printColor "- $fullName is not a supported platform..." red
+            log_info "- $fullName is not a supported platform..."
             exit
         ;;
     esac
@@ -620,13 +566,17 @@ function getHost(){
 function main(){
 
 
+
     # Determine the host platform and version as described above
     getHost
+
+    declare -A config
+    getResourceList "ubuntu"
 
     # If the platform is MacOS, we must run as a normal user.  Since the default run string for the script on the home page is sudo
     # preceeded, we must intentionally restart the script here using regular user privileges.
     # if [[ "$EUID" -eq 0 && $isMacOs == true ]]; then
-    #     printColorOS "Restarting as non root... " yellow
+    #     log_info "Restarting as non root... " yellow
     #     insStr=$(echo "sh -c 'wget -O ins.sh $instURL &> /dev/null; chmod 777 ins.sh; ./ins.sh  ${installParams[@]};'")
     #     sudo -u $SUDO_USER bash -c "$insStr"
     #     exit
@@ -636,16 +586,16 @@ function main(){
 
     # If for some reason the script was not run as sudo and the host is not MacOS, we inform the user to re-run as root.
     if [[ "$EUID" -ne 0 ]]; then
-        printColorOS "Please re-run with sudo... \n" yellow
+        log_info "Please re-run with sudo..."
 #        exit
     fi
 
     # Terminate execution if the host version does not meet the minimum version outlined in getHost
     if [[ $hostVersion -lt $minVersion ]]; then
-        printColor "- $fullName $numericalVersion" red
+        log_info "- $fullName $numericalVersion"
         echo "- Your host version is not supported... "
         exit
-    fi
+    fi 
 
     # Attempt to load the external libraries for the current platform.  If libraries fail to run, or if the host platform is unsupported,
     # we skip all package installation and User-Sync/python versioning.  Otherwise, getUST is set to true, and the logical method
@@ -655,14 +605,16 @@ function main(){
     $loadResources
     choosePythonVersion
 
+    exit
+
     # $py3V is defined in host libs, and is set to the appropriate version depending on host and User-Sync versions.  Either 3.5 or 3.6.
     [[ $pyversion == "3" ]] && fullPyVersion=$py3V || fullPyVersion="2.7"
 
-    printf " *** Parameters *** \n\n"
-    printf -- "- Python:       "; printColor $fullPyVersion green
-    #printf -- "- Get Python:   "; printColor $installPython green
-    printf -- "- UST Version:  "; printColor $ustVer green
-    printf -- "- Offline Mode: "; printColor $offlineMode green
+    printf " *** Parameters *** "
+    printf -- "- Python:       "; log_info $fullPyVersion
+    #printf -- "- Get Python:   "; log_info $installPython
+    printf -- "- UST Version:  "; log_info $ustVer
+    printf -- "- Offline Mode: "; log_info $offlineMode
 
 
     # Install packages if a package manager has been specified
@@ -678,12 +630,12 @@ function main(){
     # as a suggestion below.
 
     sudo chmod -R 777 "$USTFolder"
-    banner -m "Install Finish" -c cyan
+    log_info "Install Finish"
     echo ""
 
     # If the installWarnings flag was tripped somewhere above, we prompt the user to check for possible errors
     if $installWarnings; then
-        printColorOS "Install completed with some warnings (see above)... " yellow
+        log_info "Install completed with some warnings (see above)... "
         echo ""
     fi
 
@@ -693,11 +645,11 @@ function main(){
     if $offlineMode; then
         package
     else
-        printColorOS "Completed - You can begin to edit configuration files in:"
-        printColor "  $USTFolder" green
+        log_info "Completed - You can begin to edit configuration files in:"
+        log_info "  $USTFolder"
         echo ""
-        printColorOS "Folder permissions set to 777 for configuration file editing..." yellow
-        printColorOS "When you are finished, please run chmod -R 555 on the folder to reset permissions!" yellow
+        log_info "Folder permissions set to 777 for configuration file editing..."
+        log_info "When you are finished, please run chmod -R 555 on the folder to reset permissions!"
         echo ""
     fi
 
@@ -705,6 +657,6 @@ function main(){
 
 # EXECUTE IT ALL !!!!
 
-main
+main 2>&1 | tee -a >(sed 's/[[:cntrl:]]\[[0-9;]*m//g' >> $log_filename) 
 
-
+#main 2>&1 | tee -a >(sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g' >> $log_filename) 

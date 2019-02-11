@@ -169,37 +169,37 @@ function loadUbuntuResources(){
 
 
 
-        if $offlineMode; then
+        # if $offlineMode; then
 
-            printColor " --- OFFLINE MODE --- "  magenta
-            echo ""
-            echo " Please choose your target Ubunutu Version: "
-            echo ""
-            echo " 1. 16.04 - Xenial Xerus"
-            echo " 2. 17.04 - Zesty Zapus"
-            echo " 3. 18.04 - Bionic Beaver"
-            echo ""
+        #     log_info " --- OFFLINE MODE --- " 
+        #     echo ""
+        #     echo " Please choose your target Ubunutu Version: "
+        #     echo ""
+        #     echo " 1. 16.04 - Xenial Xerus"
+        #     echo " 2. 17.04 - Zesty Zapus"
+        #     echo " 3. 18.04 - Bionic Beaver"
+        #     echo ""
 
-            while [[ 1 -eq 1 ]]; do
-                read -p "$ " choice
-                case $choice in
-                    1) numericalVersion="16.04"; break;;
-                    2) numericalVersion="17.04"; break;;
-                    3) numericalVersion="18.04"; break;;
-                    *) ;;
-                esac
-            done
+        #     while [[ 1 -eq 1 ]]; do
+        #         read -p "$ " choice
+        #         case $choice in
+        #             1) numericalVersion="16.04"; break;;
+        #             2) numericalVersion="17.04"; break;;
+        #             3) numericalVersion="18.04"; break;;
+        #             *) ;;
+        #         esac
+        #     done
 
-            # Get the MAJOR version only
-            hostVersion=$(echo $numericalVersion | cut -c1-2)
+        #     # Get the MAJOR version only
+        #     hostVersion=$(echo $numericalVersion | cut -c1-2)
 
-        fi
+        # fi
 
         # Warn the user that non LTS versions (odd numbers) are not supported due to unreliable repository dependencies.
         # The script will run anyway, and in most cases can finish successfully.
         if (( $hostVersion%2 != 0 )); then
             echo ""
-            printColorOS "Only LTS versions are officially supported.  Extra configuration may be required... " yellow
+            log_info "Only LTS versions are officially supported.  Extra configuration may be required... " 
         fi
 
         # Defines versions where python 2.7 does NOT come with but MUST be installed to use the selected UST versions.
@@ -216,8 +216,8 @@ function loadUbuntuResources(){
         # Ask the user for permission to install python 2.7, since there is no way to satisfy the specified requirements without
         # installing python 2.7.
         if $py27Needed && ! $installPython; then
-            printColorOS "Warning: The selected version of UST cannot run your version of Ubuntu unless python 2.7 is installed. " magenta
-            printColorOS "Would you like to install python 2.7?\n" magenta
+            log_info "Warning: The selected version of UST cannot run your version of Ubuntu unless python 2.7 is installed. " 
+            log_info "Would you like to install python 2.7?\n" 
             while [[ 1 -eq 1 ]]; do
                 read -p "- (y/n)$ " choice
                 case $choice in
@@ -247,7 +247,7 @@ function loadUbuntuResources(){
 
     function installPython27(){
         if [[ $hostVersion == "17" ]]; then switchMissingRepos; fi
-        printColorOS "Installing Python 2.7..."
+        log_info "Installing Python 2.7..."
         $installString python2.7&> /dev/null
         pyCommand="python2.7"
     }
@@ -258,13 +258,13 @@ function loadUbuntuResources(){
     function installPython35(){
 
         py3prereqs
-        printColorOS "Adding ppa:fkrull/deadsnakes..."
+        log_info "Adding ppa:fkrull/deadsnakes..."
         add-apt-repository ppa:fkrull/deadsnakes -y &> /dev/null
 
-        printColorOS "Updating repositories..."
+        log_info "Updating repositories..."
         $updateCmd &> /dev/null
 
-        printColorOS "Installing Python 3.5..."
+        log_info "Installing Python 3.5..."
         $installString python3.5&> /dev/null
         add-apt-repository -remove ppa:fkrull/deadsnakes -y  &> /dev/null
         pyCommand="python3.5"
@@ -275,13 +275,13 @@ function loadUbuntuResources(){
 
         py3prereqs
         if [[ $hostVersion -lt 18 ]]; then
-            printColorOS "Adding ppa:jonathonf/python-3.6..."
+            log_info "Adding ppa:jonathonf/python-3.6..."
             add-apt-repository ppa:jonathonf/python-3.6 -y  &> /dev/null
-            printColorOS "Updating repositories..."
+            log_info "Updating repositories..."
             $updateCmd  &> /dev/null
         fi
 
-        printColorOS "Installing Python 3.6..."
+        log_info "Installing Python 3.6..."
         $installString python3.6 &> /dev/null
         add-apt-repository -remove ppa:jonathonf/python-3.6 -y  &> /dev/null;
 
@@ -381,19 +381,19 @@ function loadCentosResources(){
     fi
 
     function installPython27(){
-        printColorOS "Installing Python 2.7..."
+        log_info "Installing Python 2.7..."
         $installString python &> /dev/null
         pyCommand="python2.7"
     }
 
     function installPython36(){
-        printColorOS "Adding https://centos7.iuscommunity.org/ius-release.rpm..."
+        log_info "Adding https://centos7.iuscommunity.org/ius-release.rpm..."
         $installString https://centos7.iuscommunity.org/ius-release.rpm &> /dev/null
 
-        printColorOS "Updating repositories..."
+        log_info "Updating repositories..."
         $updateCmd &> /dev/null
 
-        printColorOS "Installing Python 3.6..."
+        log_info "Installing Python 3.6..."
         $installString python36u &> /dev/null
         pyCommand="python3.6"
     }
@@ -425,13 +425,13 @@ function loadFedoraRedhatResources(){
     fi
 
     function installPython27(){
-        printColorOS "Installing Python 2.7..."
+        log_info "Installing Python 2.7..."
         $installString python27 &> /dev/null
         pyCommand="python2.7"
     }
 
     function installPython36(){
-        printColorOS "Installing Python 3.6..."
+        log_info "Installing Python 3.6..."
         $installString python36 &> /dev/null
         pyCommand="python3.6"
     }
@@ -463,13 +463,13 @@ function loadRaspbianResources(){
     fi
 
     function installPython27(){
-        printColorOS "Installing Python 2.7..."
+        log_info "Installing Python 2.7..."
         $installString python2.7 &> /dev/null
         pyCommand="python2.7"
     }
 
     function installPython35(){
-        printColorOS "Installing Python 3.5..."
+        log_info "Installing Python 3.5..."
         $installString python3.5 &> /dev/null
         pyCommand="python3.5"
     }
