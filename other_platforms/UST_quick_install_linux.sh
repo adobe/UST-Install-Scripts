@@ -196,7 +196,7 @@ getResourceList "redhat"
 
 for e in "${!config[@]}"; do echo "$e: ${config[$e]}"; done
 
-exit
+
 
 
 
@@ -561,7 +561,7 @@ function getHost(){
 
     case $(toLower $fullName) in
         *untu*)
-            installString="apt-get --force-yes -y install"
+            installString="sudo apt-get --force-yes -y install"
             minVersion="16"
             updateCmd="apt-get update"
             loadResources=loadUbuntuResources
@@ -637,7 +637,7 @@ function main(){
     # If for some reason the script was not run as sudo and the host is not MacOS, we inform the user to re-run as root.
     if [[ "$EUID" -ne 0 ]]; then
         printColorOS "Please re-run with sudo... \n" yellow
-        exit
+#        exit
     fi
 
     # Terminate execution if the host version does not meet the minimum version outlined in getHost
