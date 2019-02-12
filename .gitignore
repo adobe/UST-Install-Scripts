@@ -9,3 +9,5 @@ USTCustomActions.CA.dll
 
 files/
 *log
+venv/
+.idea/
