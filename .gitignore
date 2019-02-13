@@ -11,3 +11,4 @@ files/
 *log
 venv/
 .idea/
+other_platforms/adobe-user-sync-tool/*
