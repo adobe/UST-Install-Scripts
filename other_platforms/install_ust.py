@@ -1,13 +1,19 @@
+import datetime
 import logging
-import sys
-import platform
-import subprocess
-import re
 import os
-import tarfile
+import platform
+import re
 import shutil
-
-
+import subprocess
+import sys
+import tarfile
+from subprocess import Popen, PIPE, STDOUT
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.x509.oid import NameOID
 
 try:
     from urllib.request import urlretrieve
@@ -41,6 +47,52 @@ meta['ubuntu'] = {
     }
 }
 
+class ssl_cert_generator:
+
+    def __init__(self, logger):
+        self.logger = logger
+
+    def get_subject(self):
+        return  x509.Name([
+                x509.NameAttribute(NameOID.COUNTRY_NAME, u"US"),
+                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"CA"),
+                x509.NameAttribute(NameOID.LOCALITY_NAME, u"San Francisco"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"My Company"),
+                x509.NameAttribute(NameOID.COMMON_NAME, u"mysite.com"),
+        ])
+
+    def get_certificate(self, key):
+        subject = issuer = self.get_subject()
+        return  x509.CertificateBuilder()\
+                .subject_name(subject)\
+                .issuer_name(issuer)\
+                .public_key(key.public_key())\
+                .serial_number(12345)\
+                .not_valid_before(datetime.datetime.utcnow())\
+                .not_valid_after(datetime.datetime.utcnow() + datetime.timedelta(days=10))\
+                .sign(key, hashes.SHA256(), default_backend())
+
+    def get_key(self):
+
+        return  rsa.generate_private_key(
+                public_exponent = 65537,
+                key_size = 2048,
+                backend = default_backend())
+
+    def generate(self):
+
+        key = self.get_key()
+        cert = self.get_certificate(key)
+
+        with open("private.key", "wb") as f:
+            f.write(key.private_bytes(
+                encoding = serialization.Encoding.PEM,
+                format = serialization.PrivateFormat.TraditionalOpenSSL,
+                encryption_algorithm=serialization.NoEncryption()
+            ))
+
+        with open("certificate_pub.crt", "wb") as f:
+            f.write(cert.public_bytes(serialization.Encoding.PEM))
 
 class web_util:
 
@@ -69,6 +121,10 @@ class web_util:
         elif config['platform']['host_key'] == "centos":
              config['resources']['ust_url'] += "centos7-py367.tar.gz" if isPy3 else "centos7-py275.tar.gz"
 
+
+
+
+
 class bash_util:
 
     def __init__(self, logger):
@@ -76,26 +132,34 @@ class bash_util:
 
 
     def shell(self, cmd):
+
+        p = Popen(cmd, shell=True, stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+
+        for line in iter(p.stdout.readline, ''):
+            p.stdin.write(b'y\n')
+            self.logger.debug(line.rstrip('\n'))
+
+    def shell_out(self, cmd):
         out = subprocess.check_output(cmd + " 2>&1", shell=True)
-        print(out.decode())
+        self.logger.debug(out.decode())
         return out
 
     def get_python_version(self, major):
         try:
-            return re.search("\d.*", self.shell("python" + str(major) + " -V")).group()
+            return re.search("\d.*", self.shell_out("python" + str(major) + " -V")).group()
         except:
             return "[none]"
 
     def install_dependencies(self, config):
 
-        self.logger.info("Update package repositories... ")
+        self.logger.info("Update package repositories ")
         self.shell(config['update_cmd'])
 
-        self.logger.info("Installing openSSL...")
+        self.logger.info("Installing openSSL")
         for c in config['openssl']:
             self.shell(c)
 
-        self.logger.info("Installing Python...")
+        self.logger.info("Installing Python")
         for c in config['python']['target']['python_inst']:
             self.shell(c)
 
@@ -109,6 +173,7 @@ class main:
         self.config = {'platform':{}, 'python':{}, 'resources':{}}
         self.web = web_util(self.logger)
         self.bash = bash_util(self.logger)
+        self.ssl_gen = ssl_cert_generator(self.logger)
         py2_version = self.bash.get_python_version(2)
         py3_version = self.bash.get_python_version(3)
 
@@ -133,6 +198,13 @@ class main:
                 'python3_status': py3_version.startswith("3.6")
             }
         }
+
+
+        self.bash.shell("sudo apt-get remove curl")
+
+        exit()
+
+        self.ssl_gen.generate()
 
         print
 
