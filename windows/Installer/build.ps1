@@ -248,8 +248,8 @@ function BuildMSI(){
 
     Log "Starting build process..... " "green"
 
-    MSBuild.exe .\ust-wix.sln /p:Configuration=Release /p:Platform="x64" -t:Clean
-    MSBuild.exe .\ust-wix.sln /p:Configuration=Release /p:Platform="x64" -t:Build
+    MSBuild.exe .\ust-wix.sln /p:Configuration=Release /p:DefineConstants="RequiredSourceDir=files\PreMapped;UstVer=2.4.1" /p:Platform="x64" -t:Clean
+    MSBuild.exe .\ust-wix.sln /p:Configuration=Release /p:DefineConstants="RequiredSourceDir=files\PreMapped;UstVer=2.4.1" /p:Platform="x64" -t:Build
   
     Log "BuildMSI finished: output in bin/en-us/AdobeUSTSetup.msi" "green"
 

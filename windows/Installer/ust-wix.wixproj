@@ -77,7 +77,8 @@
     <LinkerAdditionalOptions>-ext WixUIExtension -spdb -sw1008 -sw1076</LinkerAdditionalOptions>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
-    <DefineConstants>RequiredSourceDir=files\PreMapped</DefineConstants>
+    <DefineConstants>
+    </DefineConstants>
   </PropertyGroup>
   <!--
 	To modify your build process, add your task inside one of the targets below and uncomment it.
