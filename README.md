@@ -13,7 +13,7 @@ The UST should be installed on a VM or stable server if possible - the platforms
 |<img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/winlogo.png" height="50" width="54"> | **Windows (All versions)**: <br/> Use the msi based [windows installer](https://s3.us-east-2.amazonaws.com/adobe-ust-installer/AdobeUSTSetup.msi) for a streamlined setup process|
 | <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/ubuntulogo.png" height="25" width="25" > <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/redhatlogo.png" height="25" width="25"><br/><img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/maclogo.gif" height="25" width="25"> <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/centoslogo.png" height="25" width="25"> | **Linux and Mac OS (All versions)**: <br/>Follow the [directions below](https://github.com/adobe/UST-Install-Scripts#linux-ubuntu-1204-centos-7-fedora-redhat-susesles-debian-and-macos-os-x-10) to use the bash install scripts (cross platform)
 
-You can also download the standalone self signed certgen for Adobe.IO [here] (https://s3.us-east-2.amazonaws.com/adobe-ust-installer/AdobeIOCertgen.zip)
+You can also download the standalone self signed certgen for Adobe.IO [here](https://s3.us-east-2.amazonaws.com/adobe-ust-installer/AdobeIOCertgen.zip)
 <br/>
 
 ### Configuring the User Sync Tool
