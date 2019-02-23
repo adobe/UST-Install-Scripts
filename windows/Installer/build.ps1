@@ -14,7 +14,7 @@ $fetch = $fetch.IsPresent
 $sign = $sign.IsPresent
 $nopre = $nopre.IsPresent
 
-
+$fetch = $true
 $tokenstring = if ($env:GITHUB_TOKEN) {"?access_token=$env:GITHUB_TOKEN"} {""}
 
 # Check the input arguments for problems
@@ -108,8 +108,8 @@ function Fetch() {
     $ust_data = Invoke-RestMethod -Uri ($ust_endpoint + $tokenstring)
     $cfg_data = Invoke-RestMethod -Uri ($options['uri_cfg'] + $tokenstring)
     $gui_link = $cfg_data[0].assets.browser_download_url       
-    $releases = $ust_data.assets.browser_download_url -match ".*(win).*(.tar.gz)"                        
-    $examples = ($ust_data.assets.browser_download_url -match ".*(example).*(.tar.gz)")[0]
+    $releases = $ust_data.assets.browser_download_url -match ".*(win).*(.zip)"                        
+    $examples = ($ust_data.assets.browser_download_url -match ".*(example).*(.zip)")[0]
 
     if (!$releases -or !$gui_link){
         throw [System.Web.HttpRequestValidationException] ("Failed to retrieve data from github api...")            
@@ -126,7 +126,7 @@ function Fetch() {
     }
 
     foreach ($url in $releases){
-        $pyver = if ($url -match "(?<=-py).*(?=.tar.gz)") {$Matches[0].Substring(0, 1) + "." + $Matches[0].Substring(1, 1)} Else {"2.7"}      
+        $pyver = if ($url -match "(?<=-py).*(?=.zip)") {$Matches[0].Substring(0, 1) + "." + $Matches[0].Substring(1, 1)} Else {"2.7"}      
         $config['Binaries'].Add($pyver, @{'USTLink' = $url;'PythonLink' = $options['python_urls'][$pyver]})  
     }
 
@@ -208,8 +208,8 @@ function PreBuild(){
     Log "Beginning prebuild..... " "green"
 
     CreateFolders
-    $cfg = if ($fetch) {Fetch} else {$current_cfg}
-    GetResources ($cfg)
+    $current_cfg = if ($fetch) {Fetch} else {$current_cfg}
+    GetResources ($current_cfg)
     CopyFiles
 
     Log "PreBuild tasks complete..... " "green"
@@ -248,8 +248,9 @@ function BuildMSI(){
 
     Log "Starting build process..... " "green"
 
+    $ustver = ${current_cfg}['USTVersion']
     MSBuild.exe .\ust-wix.sln /p:Configuration=Release /p:Platform="x64" -t:Clean
-    MSBuild.exe .\ust-wix.sln /p:Configuration=Release /p:Platform="x64" -t:Build
+    MSBuild.exe .\ust-wix.sln /p:Configuration=Release /p:DefineConstants="""RequiredSourceDir=files\PreMapped;UstVer=$ustver""" /p:Platform="x64" -t:Build
   
     Log "BuildMSI finished: output in bin/en-us/AdobeUSTSetup.msi" "green"
 

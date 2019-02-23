@@ -2,7 +2,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 
   <Product Id="{BEDA4860-8948-4189-A3EF-0086675AF472}" 
-           Name="Adobe User Sync Tool 2.4" 
+           Name="Adobe User Sync Tool $(var.UstVer)" 
            Language="1033" 
            Version="1.0.0.0" 
            Manufacturer="Adobe Systems Incorporated" 
@@ -22,7 +22,7 @@
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
     <Property Id='WixUICostingPopupOptOut' Value='0' />
     <Property Id="ARPNOMODIFY" Value="1" />
-    <Property Id="USTVERSION" Value="2.4" />    
+    <Property Id="USTVERSION" Value="$(var.UstVer)" />    
     <Property Id="FOOTER" Value="  Adobe Systems Inc. 2019" />    
     <Property Id="PYTHONTEXT" Value="[Not Installed]" />
     <Property Id="SUBJECT_COUNTRY" Value="US" />
@@ -65,9 +65,6 @@
       </Component>
     </DirectoryRef>
 
-
-
-  </Product>
-  
+  </Product> 
 
 </Wix>
