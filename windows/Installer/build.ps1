@@ -162,8 +162,8 @@ function CopyFiles(){
         }    
     }
 
-    "python user-sync.pex --process-groups --users mapped -t`r`npause" | Out-File ($options['root'] + "\PreMapped\Run_UST_Test_Mode.bat") -Force -Encoding ascii
-    "python user-sync.pex --process-groups --users mapped" | Out-File ($options['root'] + "\PreMapped\Run_UST_Live.bat") -Force -Encoding ascii
+    "cd /D `"%~dp0`"`r`npython user-sync.pex --process-groups --users mapped -t`r`npause" | Out-File ($options['root'] + "\PreMapped\Run_UST_Test_Mode.bat") -Force -Encoding ascii
+    "cd /D `"%~dp0`"`r`npython user-sync.pex --process-groups --users mapped" | Out-File ($options['root'] + "\PreMapped\Run_UST_Live.bat") -Force -Encoding ascii
 
 }
 
