@@ -19,6 +19,7 @@ $message = $message.Replace("`"","'")
 $message = $message.Replace("\","")
 $message = $message.Replace("# ","")
 $message = $message.Replace("`r`n","<br/>")
+$message = $message.Replace("`n","<br/>")
 $message = $message.Trim()
 
 $body = '{' +
