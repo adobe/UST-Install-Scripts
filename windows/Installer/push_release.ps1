@@ -5,7 +5,6 @@ param(
   [String]$repo="adobe/UST-Install-Scripts"
   )
 
-  
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $token = $env:GITHUB_TOKEN
 
@@ -14,6 +13,13 @@ $releaseURL = "https://api.github.com/repos/$repo/releases?access_token=$token"
 $ctag = (Invoke-RestMethod -Uri $releaseURL -Method 'Get')[0].tag_name
 $prefix = $ctag.Substring(0,$ctag.LastIndexOf(".") + 1)
 $version = [int] $ctag.Substring($ctag.LastIndexOf(".")+ 1) + 1
+
+$message = [System.Web.HttpUtility]::UrlDecode($message)
+$message = $message.Replace("`"","'")
+$message = $message.Replace("\","")
+$message = $message.Replace("# ","")
+$message = $message.Replace("`r`n","<br/>")
+$message = $message.Trim()
 
 $body = '{' +
     '"tag_name": "' + $prefix + $version + '",' +
