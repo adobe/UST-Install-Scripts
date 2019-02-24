@@ -10,7 +10,7 @@ pipeline {
 		stage('Configure') {
 			steps {
 				script{
-					env.MESSAGE = sh(returnStdout: true, script: 'git log -1 --pretty=format:%s')
+					env.MESSAGE = sh(returnStdout: true, script: 'git log -1 --pretty=format:%s') + "\n\n" + params.message
 					env.DO_RELEASE = env.MESSAGE.matches("release:" + "(.*)") || params.release == "true"
 				}
 			}
