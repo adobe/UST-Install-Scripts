@@ -30,6 +30,8 @@ $body = '{' +
     '"prerelease": false' +
 '}'
 
+Write-Host "Message: " + $message
+
 $release = (Invoke-RestMethod -Uri $releaseURL -Method 'Post' -Body $body -Headers @{"Content-Type" = "application/json"})
 
 foreach ($filepath in $filepaths.Split(",")) {
