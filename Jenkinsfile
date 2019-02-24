@@ -12,6 +12,7 @@ pipeline {
 				script{
 					env.MESSAGE = sh(returnStdout: true, script: 'git log -1 --pretty=format:%s') + "\n\n" + params.message
 					env.DO_RELEASE = env.MESSAGE.matches("release:" + "(.*)") || params.release == "true"
+					env.MESSAGE = java.net.URLEncoder.encode(env.MESSAGE, "UTF-8")
 				}
 			}
 		}	
@@ -36,7 +37,8 @@ pipeline {
 			when {expression { env.DO_RELEASE == 'true' }}
 			steps {
 				script{     
-					dir("windows") {						
+					dir("windows") {			
+						echo env.MESSAGE			
 						sh 'powershell -File Installer/push_release.ps1 -filepaths "$msi_file","$cert_file" -message "$MESSAGE"'
 					}
 				}
