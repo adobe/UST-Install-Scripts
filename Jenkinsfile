@@ -11,7 +11,7 @@ pipeline {
 			steps {
 				script{
 					env.MESSAGE = sh(returnStdout: true, script: 'git log -1 --pretty=format:%s')
-					env.DO_RELEASE = env.MESSAGE.matches("release:" + "(.*)")
+					env.DO_RELEASE = env.MESSAGE.matches("release:" + "(.*)") || params.release == "true"
 				}
 			}
 		}	
