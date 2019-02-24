@@ -38,8 +38,8 @@ pipeline {
 			steps {
 				script{     
 					dir("windows") {			
-						echo env.MESSAGE			
-						sh 'powershell -File Installer/push_release.ps1 -filepaths "$msi_file","$cert_file" -message "$MESSAGE"'
+						env.msg = MESSAGE
+						sh 'powershell -File Installer/push_release.ps1 -filepaths "$msi_file","$cert_file" -message "$msg"'
 					}
 				}
 			}
