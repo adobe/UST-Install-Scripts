@@ -304,7 +304,7 @@ class main:
         self.show_intro()
         #self.install_ust()
         self.ssl_gen.generate()
-        exit()
+
         self.bash.install_dependencies(self.config)
 
 
@@ -322,6 +322,7 @@ class LoggingContext:
 
     def __init__(self):
         self.formatter = logging.Formatter()
+        logging.setLoggerClass(self.CustomLogger)
         original_stdout = sys.stdout
 
     def get_log_string(self, msg=""):
@@ -339,22 +340,32 @@ class LoggingContext:
 
         self.formatter = logging.Formatter(f_format, log_params['date_fmt'])
         logging.basicConfig(level=log_params['log_level'], format=f_format, datefmt=log_params['date_fmt'])
-        logger = self.CustomLogger("main") #logging.getLogger("main")
+        logger = logging.getLogger("main")
         f_handler = logging.FileHandler('ust_install.log', 'w')
         f_handler.setFormatter(self.formatter)
         f_handler.setLevel(log_params['log_level'])
         logger.addHandler(f_handler)
         sys.stderr = sys.stdout = self.StreamToLogger(logger, log_params['log_level'])
 
+        logger.info("AAAAA")
+        logger.test()
+
+
+        exit()
+
         return logger
 
     class CustomLogger(logging.Logger):
         def __init__(self, name):
             logging.Logger.__init__(self, name)
-            
+            self.logger = super(LoggingContext.CustomLogger, self)
+            self.original = sys.stdout
 
         def test(self):
-            print("ABCDE")
+            sys.stdout= self.original
+            print("TTT")
+            self.logger.info("ASDASD")
+
 
     class StreamToLogger(object):
         def __init__(self, logger, log_level):
