@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import binascii
 from subprocess import Popen, PIPE, STDOUT
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -29,7 +30,7 @@ meta['ubuntu'] = {
     '16': {
         'python_vers': '2.7',
         'python_inst': ['sudo apt-get -y install libpython2.7',
-                        'sudo apt-get -y install libatlas3-base',
+                      'sudo apt-get -y install libatlas3-base',
                         'sudo apt-get -y install python2.7'],
     },
     '17': {
@@ -47,23 +48,23 @@ meta['ubuntu'] = {
     }
 }
 
-
 intro = [
-        "",
-        "=========================================================",
-        "{0} {1} - {2}",
-        "",
-        "         _   _                 ___",
-        "        | | | |___ ___ _ _    / __|_  _ _ _  __",
-        "        | |_| (_-</ -_) '_|   \__ \ || | ' \/ _|",
-        "         \___//__/\___|_|     |___/\_, |_||_\__|",
-        "                                   |__/",
-        "",
-        "Linux Quick Install for UST {3} ",
-        "https://github.com/adobe/UST-Install-Scripts",
-        "=========================================================",
-        ""
-    ]
+    "",
+    "=========================================================",
+    "{0} {1} - {2}",
+    "",
+    "         _   _                 ___",
+    "        | | | |___ ___ _ _    / __|_  _ _ _  __",
+    "        | |_| (_-</ -_) '_|   \__ \ || | ' \/ _|",
+    "         \___//__/\___|_|     |___/\_, |_||_\__|",
+    "                                   |__/",
+    "",
+    "Linux Quick Install for UST {3} ",
+    "https://github.com/adobe/UST-Install-Scripts",
+    "=========================================================",
+    ""
+]
+
 
 
 original = sys.stdout
@@ -71,42 +72,35 @@ original = sys.stdout
 
 class ssl_cert_generator:
 
-    def __init__(self, logger):
-        self.logger = logger
+    def __init__(self, loggingContext):
+        self.logger = loggingContext.getLogger("ssl")
 
-    def get_value(self):
+    def rnd(self):
+        return binascii.b2a_hex(os.urandom(6))
 
-        import StringIO
+    def collect_fields(self, subject):
 
-        self.logger.test()
-        #x = lc.log_capture_string.getvalue()
-
-        # old_stdout = sys.stdout
-        # s = StringIO.StringIO()
-        #sys.stdout = original
-#
-
-       #$ sys.stdout.write("2019-02-26 22:36:10 Ubuntu 16.04 xenial  [main    ]  [INFO ]  :::")
-     #   raw_input("2019-02-26 22:36:10 Ubuntu 16.04 xenial  [main    ]  [INFO ]  ::: ")
-        #sys.stdout = old_stdout
-
-
-        print()
+        tsub = {}
+        tsub['country'] = self.logger.input(("Country Code [{0}]: ").format(subject['country']))[0:2]
+        tsub['state'] = self.logger.input(("State [{0}]: ").format(subject['state']))
+        tsub['city'] = self.logger.input(("City [{0}]: ").format(subject['city']))
+        tsub['org'] = self.logger.input(("Organisation [{0}]: ").format(subject['org']))
+        tsub['cn'] = self.logger.input(("Common Name [{0}]: ").format(subject['cn']))
+        for e in tsub:
+            if str.strip(tsub[e]) != "": subject[e] = tsub[e]
+        return subject
 
 
-        # z = self.logger.info("")
-        # sys.stdout.write("A")
-        # sys.stdout.write("C")
-        # print("BBBB")
-        # raw_input("ABCD")
-
-      #  return raw_input("Country Code [US]: ")
 
 
     def get_subject(self):
 
-        self.get_value()
-       # self.logger.info(self.get_value())
+        #subject = {'country':"US",'state':"CA",'city':"San Francisco",'org':"My Company",'cn':"John Smith"}
+        subject = {'country':self.rnd(),'state':self.rnd(),'city':self.rnd(),'org':self.rnd(),'cn':self.rnd()}
+
+        #subject = self.collect_fields(subject)
+
+        self.logger.question("Question")
 
         return  x509.Name([
                 x509.NameAttribute(NameOID.COUNTRY_NAME, u"US"),
@@ -153,8 +147,8 @@ class ssl_cert_generator:
 
 class web_util:
 
-    def __init__(self, logger):
-        self.logger = logger
+    def __init__(self, loggingContext):
+        self.logger = loggingContext.getLogger("web")
 
     def download(self, url, dir):
 
@@ -182,8 +176,8 @@ class web_util:
 
 class bash_util:
 
-    def __init__(self, logger):
-        self.logger = logger
+    def __init__(self, loggingContext):
+        self.logger = loggingContext.getLogger("bash")
 
 
     def shell(self, cmd):
@@ -221,12 +215,14 @@ class main:
     def __init__(self):
 
         platform_details = platform.linux_distribution()
-        self.logger = lc.init_logger(platform_details)
+        self.loggingContext = LoggingContext(descriptor=("{0} {1} {2}")
+            .format(platform_details[0], platform_details[1], platform_details[2]))
 
+        self.logger = self.loggingContext.getLogger("main")
         self.config = {'platform':{}, 'python':{}, 'resources':{}}
-        self.web = web_util(self.logger)
-        self.bash = bash_util(self.logger)
-        self.ssl_gen = ssl_cert_generator(self.logger)
+        self.web = web_util(self.loggingContext)
+        self.bash = bash_util(self.loggingContext)
+        self.ssl_gen = ssl_cert_generator(self.loggingContext)
         py2_version = self.bash.get_python_version(2)
         py3_version = self.bash.get_python_version(3)
 
@@ -305,7 +301,7 @@ class main:
         #self.install_ust()
         self.ssl_gen.generate()
 
-        self.bash.install_dependencies(self.config)
+        #self.bash.install_dependencies(self.config)
 
 
     def show_intro(self):
@@ -318,56 +314,65 @@ class main:
                     self.config['resources']['ust_version']))
 
 
+
+
 class LoggingContext:
 
-    def __init__(self):
-        self.formatter = logging.Formatter()
-        logging.setLoggerClass(self.CustomLogger)
-        original_stdout = sys.stdout
+    def __init__(self, console_level=logging.INFO,  descriptor=""):
 
-    def get_log_string(self, msg=""):
-        r = logging.LogRecord("main", logging.INFO, "", 1, msg, None, None)
-        return self.formatter.format(r)
+        format_string = "%(asctime)s " + descriptor + "  [%(name)-8.8s]  [%(levelname)-5.5s]  :::  %(message)s"
+        self.formatter = logging.Formatter(format_string, "%Y-%m-%d %H:%M:%S")
+        self.original_stdout = sys.stdout
 
-    def init_logger(self, platform):
-        log_params = {
-            'this_name': platform[0] + " " + platform[1] + " " + platform[2],
-            'log_level': logging.getLevelName("DEBUG"),
-            'date_fmt': '%Y-%m-%d %H:%M:%S'
-        }
-
-        f_format = "%(asctime)s " + log_params['this_name'] + "  [%(name)-8.8s]  [%(levelname)-5.5s]  :::  %(message)s"
-
-        self.formatter = logging.Formatter(f_format, log_params['date_fmt'])
-        logging.basicConfig(level=log_params['log_level'], format=f_format, datefmt=log_params['date_fmt'])
-        logger = logging.getLogger("main")
         f_handler = logging.FileHandler('ust_install.log', 'w')
         f_handler.setFormatter(self.formatter)
-        f_handler.setLevel(log_params['log_level'])
-        logger.addHandler(f_handler)
-        sys.stderr = sys.stdout = self.StreamToLogger(logger, log_params['log_level'])
+        f_handler.setLevel(console_level)
 
-        logger.info("AAAAA")
-        logger.test()
+        logging.setLoggerClass(self.InputLogger)
+        logging.basicConfig(level=console_level, format=format_string, datefmt="%Y-%m-%d %H:%M:%S")
+        logging.getLogger('').addHandler(f_handler)
+        sys.stderr = sys.stdout = self.StreamLogger(logging.getLogger("main"), logging.INFO)
 
-
-        exit()
-
+    def getLogger(self, name):
+        logger = logging.getLogger(name)
+        logger.formatter = self.formatter
+        logger.original_stdout = self.original_stdout
         return logger
 
-    class CustomLogger(logging.Logger):
+    class InputLogger(logging.Logger):
         def __init__(self, name):
             logging.Logger.__init__(self, name)
-            self.logger = super(LoggingContext.CustomLogger, self)
-            self.original = sys.stdout
+            self.logger = super(LoggingContext.InputLogger, self)
+            self.original_stdout = sys.stdout
+            self.formatter = None
+            self.name = name
 
-        def test(self):
-            sys.stdout= self.original
-            print("TTT")
-            self.logger.info("ASDASD")
+        def question(self,  message):
+            ans = ""
+            while True:
+                ans = str(self.input(message)).lower()
+                if (ans != "y" and ans != "n"):
+                    self.logger.info("Please enter (y/n)...")
+                else:
+                    break
 
 
-    class StreamToLogger(object):
+        def input(self, message):
+            current_stdout = sys.stdout
+            sys.stdout = self.original_stdout
+            print(self.getLogString(message + " ")),
+            sys.stdout = None
+            r = sys.stdin.readline().rstrip()
+            sys.stdout = current_stdout
+            self.logger.debug(message+ " " + r)
+            return r
+
+        def getLogString(self, msg):
+            r = logging.LogRecord(self.name, logging.INFO, "", 1, msg, None, None)
+            return self.formatter.format(r)
+
+
+    class StreamLogger(object):
         def __init__(self, logger, log_level):
             self.logger = logger
             self.log_level = log_level
@@ -376,7 +381,5 @@ class LoggingContext:
             for line in message.rstrip().splitlines():
                 self.logger.log(self.log_level, line.rstrip())
 
-        def flush(self): pass
 
-lc = LoggingContext()
 main().run()
