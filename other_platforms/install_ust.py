@@ -24,20 +24,26 @@ except ImportError:
     from urllib import urlretrieve
 
 parser = ArgumentParser()
-parser.add_argument('-d','--debug', action='store_true')
+parser.add_argument('-d', '--debug', action='store_true')
 args = parser.parse_args()
 console_level = logging.DEBUG if args.debug else logging.INFO
 
 meta = {
     'ubuntu': {
         'update_cmd': 'sudo apt-get update',
-        'python_req': {'16': '2.7', '17': '2.7','18': '3.6' },
+        'python_req': {
+            '16': '2.7',
+            '17': '2.7',
+            '18': '3.6'},
         'openssl_script': ['sudo apt-get -y install openssl',
                            'sudo apt-get -y install libssl-dev'],
     },
     'centos': {
         'update_cmd': 'sudo apt-get update',
-        'python_req': {'16': '2.7', '17': '2.7','18': '3.6' },
+        'python_req': {
+            '16': '2.7',
+            '17': '2.7',
+            '18': '3.6'},
         'openssl_script': ['sudo apt-get -y install openssl',
                            'sudo apt-get -y install libssl-dev'],
     }
@@ -63,8 +69,9 @@ intro = [
 
 class ssl_cert_generator:
 
-    def __init__(self, loggingContext):
+    def __init__(self, loggingContext, config):
         self.logger = loggingContext.getLogger("ssl")
+        self.config = config
         self.keys = {
             'cc': 'Country Code',
             'st': 'State',
@@ -73,7 +80,7 @@ class ssl_cert_generator:
             'cn': 'Common Name'}
 
     def rnd(self, size=6):
-        return binascii.b2a_hex(os.urandom(size))
+        return str.upper(binascii.b2a_hex(os.urandom(size)))
 
     def collect_fields(self, sub):
 
@@ -84,23 +91,39 @@ class ssl_cert_generator:
             tsub[k] = self.logger.input(self.logger.pad(self.keys[k] + " [" + sub[k] + "]", 30) + ": ")
             if str.strip(tsub[k]) != "": sub[k] = tsub[k]
 
-        sub["cc"] = sub["cc"][0:2]
+        sub['cc'] = str.upper(sub['cc'])
         return sub
+
+    def validate_fields(self, subject):
+        valid = True
+        if  len(subject['cc']) != 2:
+            valid = False
+            self.logger.info("Country code must be exactly 2 characters long...")
+        if re.search('[^A-Za-z]', subject['cc']):
+            valid = False
+            self.logger.info("Only letters allowed in country code " + subject['cc'] + ", press re-enter...")
+        for k in subject:
+            if re.search('[^A-Za-z0-9@._]', subject[k]):
+                valid = False
+                self.logger.info("Illegal character in " + self.keys[k] + ": " + subject[k] + ", press re-enter...")
+        return valid
 
     def get_subject(self):
 
         subject = {}
         for k in self.keys:
             subject[k] = self.rnd(1) if k == "cc" else self.rnd()
+        subject["cc"] = "US"
 
         while True:
             subject = self.collect_fields(subject)
             self.logger.info("")
             for k in subject:
                 self.logger.info(self.logger.pad(str(self.keys[k])) + ": " + subject[k])
-
             self.logger.info("")
-            if self.logger.question("Is this information correct (y/n) [y]?  "): break
+
+            if self.validate_fields(subject):
+                if self.logger.question("Is this information correct (y/n) [y]?  "): break
 
         return x509.Name([
             x509.NameAttribute(NameOID.COUNTRY_NAME, six.u(subject['cc'])),
@@ -109,6 +132,7 @@ class ssl_cert_generator:
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, six.u(subject['or'])),
             x509.NameAttribute(NameOID.COMMON_NAME, six.u(subject['cn'])),
         ])
+
 
     def get_certificate(self, key):
         subject = issuer = self.get_subject()
@@ -121,28 +145,41 @@ class ssl_cert_generator:
             .not_valid_after(datetime.datetime.utcnow() + datetime.timedelta(days=10)) \
             .sign(key, hashes.SHA256(), default_backend())
 
+
     def get_key(self):
+        self.logger.info("Generating private key (2048)")
         return rsa.generate_private_key(
             public_exponent=65537,
             key_size=2048,
             backend=default_backend())
 
+
     def generate(self):
+        self.logger.info("")
         self.logger.info("Begin SSL certificate generation...")
+        self.logger.info("Enter your information to create a self-signed certificate/key pair.")
+        self.logger.info("This will be used for authentication with the UMAPI at https://console.adobe.io.")
+        self.logger.info("You can also press enter to use the randomly generated default values.")
 
         key = self.get_key()
         cert = self.get_certificate(key)
 
-        with open("private.key", "wb") as f:
+        certfile =  self.config['ust_directory'] + os.sep + "certificate_pub.crt"
+        keyfile =  self.config['ust_directory'] + os.sep + "private.key"
+
+        self.logger.info("Writing private key to file: " + keyfile)
+        with open(keyfile, "wb") as f:
             f.write(key.private_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.TraditionalOpenSSL,
                 encryption_algorithm=serialization.NoEncryption()
             ))
 
-        with open("certificate_pub.crt", "wb") as f:
+        self.logger.info("Writing public cert to file: " + certfile)
+        with open(certfile, "wb") as f:
             f.write(cert.public_bytes(serialization.Encoding.PEM))
 
+        self.logger.info("SSL certificate generation complete!")
 
 class web_util:
 
@@ -151,12 +188,15 @@ class web_util:
 
     def download(self, url, dir):
 
-        filename = dir + os.sep + str(url.rpartition('/')[2])
-        urlretrieve(url, filename)
+        filename = str(url.rpartition('/')[2])
+        filepath = dir + os.sep + filename
+        self.logger.info("Downloading " + filename + " from " + url)
 
-        if (filename.endswith(".tar.gz")):
-            tarfile.open(filename).extractall(path=dir)
-            os.remove(filename)
+        urlretrieve(url, filepath)
+
+        if (filepath.endswith(".tar.gz")):
+            tarfile.open(filepath).extractall(path=dir)
+            os.remove(filepath)
 
     def fetch_resources(self, config):
 
@@ -218,10 +258,9 @@ class main:
                                              .format(platform_details[0], platform_details[1], platform_details[2]))
 
         self.logger = self.loggingContext.getLogger("main")
-        self.config = {'platform': {},'resources':{}}
-        self.web = web_util(self.loggingContext)
-        self.bash = bash_util(self.loggingContext)
-        self.ssl_gen = ssl_cert_generator(self.loggingContext)
+        self.config = {
+            'platform': {},
+            'resources': {}}
 
         if (bool(re.search("(ubuntu)", platform_details[0], re.I))):
             self.config['platform']['host_key'] = "ubuntu"
@@ -233,10 +272,14 @@ class main:
         self.config['platform']['host_name'] = platform_details[2]
         self.config['platform']['host_version'] = platform_details[1]
         self.config['platform']['major_version'] = platform_details[1][:2]
-        self.config['ust_directory'] = "adobe-user-sync-tool"
+        self.config['ust_directory'] =  os.path.abspath("adobe-user-sync-tool")
         self.config['update_cmd'] = hostkey['update_cmd']
         self.config['openssl'] = hostkey['openssl_script']
         self.config['python_version'] = hostkey['python_req'][platform_details[1][:2]]
+
+        self.web = web_util(self.loggingContext)
+        self.bash = bash_util(self.loggingContext)
+        self.ssl_gen = ssl_cert_generator(self.loggingContext, self.config)
         self.web.fetch_resources(self.config)
 
     def run(self):
@@ -257,17 +300,14 @@ class main:
 
         self.logger.info("Beginning UST installation")
 
-        ust_dir = os.path.abspath(self.config['ust_directory'])
+        ust_dir = self.config['ust_directory']
         conf_dir = os.path.abspath(os.path.join(ust_dir, 'examples', 'config files - basic'))
 
         self.logger.info("Creating directory " + ust_dir)
         shutil.rmtree(ust_dir, ignore_errors=True)
         os.mkdir(ust_dir)
 
-        self.logger.info("Downloading examples from " + self.config['resources']['examples_url'])
         self.web.download(self.config['resources']['examples_url'], ust_dir)
-
-        self.logger.info("Downloading UST from " + self.config['resources']['ust_url'])
         self.web.download(self.config['resources']['ust_url'], ust_dir)
 
         self.logger.info("Creating configuration files... ")
