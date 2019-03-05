@@ -1,3 +1,25 @@
+# -*- coding: utf-8 -*-
+
+# Copyright (c) 2019 Adobe Inc.  All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import datetime
 import logging
 import os
@@ -28,6 +50,8 @@ parser.add_argument('-d', '--debug', action='store_true')
 args = parser.parse_args()
 console_level = logging.DEBUG if args.debug else logging.INFO
 
+# Platform specific information.  Used to determine which version of UST to download,
+# as well as to specify the install process for openSSL.
 meta = {
     'ubuntu': {
         'update_cmd': 'sudo apt-get update',
@@ -49,8 +73,10 @@ meta = {
     }
 }
 
+# Intro banner!
 intro = [
     "",
+    "Adobe Systems, Inc© - 2019",
     "=========================================================",
     "{0} {1} - {2}",
     "",
@@ -68,10 +94,23 @@ intro = [
 
 
 class ssl_cert_generator:
+    """
+    SSL Certificate / Keypair generator
+
+    Generates a certificate and keypair to use with the Adobe UMAPI:  https://console.adobe.io
+    The type is X509 with RSA 2048 private key.  Creates certificate_pub.crt and private.key
+    in the installation folder
+    """
 
     def __init__(self, loggingContext, config):
-        self.logger = loggingContext.getLogger("ssl")
+        """
+        :param loggingContext:
+        :param config: inherit top level configuration for directories
+        """
+        self.logger = loggingContext.getLogger("sslGen")
         self.config = config
+
+        # Key reference for subject field names
         self.keys = {
             'cc': 'Country Code',
             'st': 'State',
@@ -79,14 +118,15 @@ class ssl_cert_generator:
             'or': 'Organization',
             'cn': 'Common Name'}
 
+    # Return a random hex value of specified length
     def rnd(self, size=6):
         return str.upper(binascii.b2a_hex(os.urandom(size)))
 
+    # Get user input for all fields in subject
+    # User default value if empty string is input
     def collect_fields(self, sub):
-
         tsub = {}
         self.logger.info("")
-
         for k in self.keys:
             tsub[k] = self.logger.input(self.logger.pad(self.keys[k] + " [" + sub[k] + "]", 30) + ": ")
             if str.strip(tsub[k]) != "": sub[k] = tsub[k]
@@ -95,6 +135,12 @@ class ssl_cert_generator:
         return sub
 
     def validate_fields(self, subject):
+        """
+        Validates subject fields - only letters for country code, limited ASCII set for other fields
+        :param subject: certificate subject dictionary (ref self.keys)
+        :return: boolean - valid or not
+        """
+
         valid = True
         if  len(subject['cc']) != 2:
             valid = False
@@ -109,12 +155,18 @@ class ssl_cert_generator:
         return valid
 
     def get_subject(self):
+        """
+        Call field collection and validate input
+        :return: X509 subject
+        """
 
+        # Randomize initial subject
         subject = {}
         for k in self.keys:
             subject[k] = self.rnd(1) if k == "cc" else self.rnd()
         subject["cc"] = "US"
 
+        # Wait for user-approved valid input
         while True:
             subject = self.collect_fields(subject)
             self.logger.info("")
@@ -125,6 +177,7 @@ class ssl_cert_generator:
             if self.validate_fields(subject):
                 if self.logger.question("Is this information correct (y/n) [y]?  "): break
 
+        # Build X509 - note: unicode formatting is required
         return x509.Name([
             x509.NameAttribute(NameOID.COUNTRY_NAME, six.u(subject['cc'])),
             x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, six.u(subject['st'])),
@@ -133,7 +186,7 @@ class ssl_cert_generator:
             x509.NameAttribute(NameOID.COMMON_NAME, six.u(subject['cn'])),
         ])
 
-
+    # Return a certificate based on private key and subject
     def get_certificate(self, key):
         subject = issuer = self.get_subject()
         return x509.CertificateBuilder() \
@@ -145,7 +198,7 @@ class ssl_cert_generator:
             .not_valid_after(datetime.datetime.utcnow() + datetime.timedelta(days=10)) \
             .sign(key, hashes.SHA256(), default_backend())
 
-
+    # Generate a random RSA 2048 key
     def get_key(self):
         self.logger.info("Generating private key (2048)")
         return rsa.generate_private_key(
@@ -155,6 +208,11 @@ class ssl_cert_generator:
 
 
     def generate(self):
+        """
+        Certificate generation entry point.  Creates a key, certificate, and then writes files to
+        certificate_pub.crt and private.key in the installation path
+        :return:
+        """
         self.logger.info("")
         self.logger.info("Begin SSL certificate generation...")
         self.logger.info("Enter your information to create a self-signed certificate/key pair.")
@@ -167,6 +225,7 @@ class ssl_cert_generator:
         certfile =  self.config['ust_directory'] + os.sep + "certificate_pub.crt"
         keyfile =  self.config['ust_directory'] + os.sep + "private.key"
 
+        # Write private key
         self.logger.info("Writing private key to file: " + keyfile)
         with open(keyfile, "wb") as f:
             f.write(key.private_bytes(
@@ -175,6 +234,7 @@ class ssl_cert_generator:
                 encryption_algorithm=serialization.NoEncryption()
             ))
 
+        # Write public cert
         self.logger.info("Writing public cert to file: " + certfile)
         with open(certfile, "wb") as f:
             f.write(cert.public_bytes(serialization.Encoding.PEM))
@@ -182,24 +242,45 @@ class ssl_cert_generator:
         self.logger.info("SSL certificate generation complete!")
 
 class web_util:
+    """
+    Handles web and web-related requests using urrlib from the standard lib.  Includes file downloads
+    and dynamic resource fetching from the GitHub API in order to maintain the latest verison of UST.
+    Uses a generic GitHub token for stable API access
+    """
 
     def __init__(self, loggingContext):
-        self.logger = loggingContext.getLogger("web")
+        self.logger = loggingContext.getLogger("webUtil")
 
     def download(self, url, dir):
+        """
+        Downloads the specfied URL, and puts it in dir.  If the file is a tar.gz, it is extracted
+        and the original file is removed
+        :param url: URL for target resource
+        :param dir: Target directory for file
+        :return:
+        """
 
         filename = str(url.rpartition('/')[2])
         filepath = dir + os.sep + filename
         self.logger.info("Downloading " + filename + " from " + url)
 
+        # Download
         urlretrieve(url, filepath)
 
+        # Extract if needed
         if (filepath.endswith(".tar.gz")):
             tarfile.open(filepath).extractall(path=dir)
             os.remove(filepath)
 
     def fetch_resources(self, config):
+        """
+        Fetches the current configuration from the UST repository using the GitHub API, and parses the JSON for
+        the appropriate URL's.  Sets the corresponding keys in config for later download.
+        :param config: configuration from main class
+        :return:
+        """
 
+        # Hardcoded - temporarily until API integration
         config['resources']['ust_version'] = "2.4"
         config['resources'][
             'examples_url'] = "https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/examples.tar.gz"
@@ -216,21 +297,29 @@ class web_util:
 
 
 class bash_util:
+    """
+    Methods for working with the command line.  Includes shell execution, shellscript creation and
+    dependency management
+    """
 
     def __init__(self, loggingContext):
         self.logger = loggingContext.getLogger("bash")
 
+    # Starts a shell process.  Inserts "y" key after command  to avoid hangups for shell prompts
     def shell(self, cmd):
         p = Popen(cmd, shell=True, stdout=PIPE, stdin=PIPE, stderr=STDOUT)
         for line in iter(p.stdout.readline, ''):
             p.stdin.write(b'y\n')
             self.logger.debug(line.rstrip('\n'))
 
+    # Runs a shell command, but captures the output
     def shell_out(self, cmd):
         out = subprocess.check_output(cmd + " 2>&1", shell=True)
         self.logger.debug(out.decode().rstrip('\n'))
         return out
 
+    # Determines installed python version and compares to the minimum requirement.  Requirement is exact - Python 3.6
+    # cannot be substituted for 2.7.  Requirements defined in meta dictionary at top of file.
     def check_python_version(self, major):
         try:
             var = re.search("\d.*", self.shell_out("python" + str(major) + " -V")).group()
@@ -239,8 +328,9 @@ class bash_util:
                                  " python " + str(major) + ".* and re-run the setup.")
             exit()
 
+    # Uses the install command after updating (apt-get update, apt-get install) to enable openSSL for future cert
+    # generation if needed.
     def install_dependencies(self, config):
-
         self.logger.info("Update package repositories ")
         self.shell(config['update_cmd'])
 
@@ -250,18 +340,23 @@ class bash_util:
 
 
 class main:
-
+    """
+    Main class.  Gathers installation information, and then executes the run() method to kick off process.
+    """
     def __init__(self):
 
         platform_details = platform.linux_distribution()
-        self.loggingContext = LoggingContext(console_level=console_level, descriptor=("{0} {1} {2}")
-                                             .format(platform_details[0], platform_details[1], platform_details[2]))
+
+        # Build base logging context from platform information
+        self.loggingContext = LoggingContext(console_level=console_level, descriptor=("{0} {1}")
+                                             .format(platform_details[0], platform_details[1]))
 
         self.logger = self.loggingContext.getLogger("main")
         self.config = {
             'platform': {},
             'resources': {}}
 
+        # Determine which platform the script is running on
         if (bool(re.search("(ubuntu)", platform_details[0], re.I))):
             self.config['platform']['host_key'] = "ubuntu"
         elif (bool(re.search("(cent)|(fedora)|(red)", platform_details[0], re.I))):
@@ -277,18 +372,34 @@ class main:
         self.config['openssl'] = hostkey['openssl_script']
         self.config['python_version'] = hostkey['python_req'][platform_details[1][:2]]
 
+        # DI
         self.web = web_util(self.loggingContext)
         self.bash = bash_util(self.loggingContext)
         self.ssl_gen = ssl_cert_generator(self.loggingContext, self.config)
+
+        #Finish building resources by fetching the API information from GitHub
         self.web.fetch_resources(self.config)
 
     def run(self):
+        """Top level entry point.
+        Install process begins here
+        Version check -> UST download -> dependency installation -> SSL creation
+        """
         self.show_intro()
         self.bash.check_python_version(self.config['python_version'])
         self.install_ust()
         self.bash.install_dependencies(self.config)
         self.ssl_gen.generate()
 
+        self.logger.info("")
+        self.logger.info("Installation complete!  Files are located in: " + self.config['ust_directory'])
+        self.logger.info("Please follow the next steps for configuring the sync tool.")
+        self.logger.info("For setup details, see: https://helpx.adobe.com/enterprise/using/user-sync.html")
+        self.logger.info("Documentation: https://adobe-apiplatform.github.io/user-sync.py/en/success-guide/")
+        self.logger.info("")
+        self.logger.info("")
+
+    # Creates a shell script to execute specified command.  For run_ust and ssl scripts.
     def create_shell(self, filename, command):
         filename = os.path.abspath(filename)
         self.logger.info(filename)
@@ -297,6 +408,12 @@ class main:
         text_file.close()
 
     def install_ust(self):
+        """
+        Process for installing UST.  This amounts to downloading UST itself, the examples file, and
+        extracting them all into the installation directory.  The execution shell scripts are also generated
+        here along with the SSL regeneration script.
+        :return:
+        """
 
         self.logger.info("Beginning UST installation")
 
@@ -307,6 +424,7 @@ class main:
         shutil.rmtree(ust_dir, ignore_errors=True)
         os.mkdir(ust_dir)
 
+        # Download UST and examples
         self.web.download(self.config['resources']['examples_url'], ust_dir)
         self.web.download(self.config['resources']['ust_url'], ust_dir)
 
@@ -324,16 +442,19 @@ class main:
                           "#!/usr/bin/env bash\nopenssl req -x509 -sha256 -nodes -days 9125 "
                           "-newkey rsa:2048 -keyout private.key -out certificate_pub.crt")
 
+        # Set folder permissions to allow editing of .yml files
         self.logger.info("Setting folder permissions to 777... ")
         self.bash.shell("sudo chmod 777 -R " + ust_dir)
         self.logger.info("UST installation finished... ")
 
+    # Logged file copier
     def copy_to(self, src, dest):
         src = os.path.abspath(src)
         dest = os.path.abspath(dest)
         self.logger.info("Copy " + src + " to " + dest)
         shutil.copy(src, dest)
 
+    # Prints a pretty UST banner!
     def show_intro(self):
         for s in intro:
             self.logger.info(
@@ -345,22 +466,36 @@ class main:
 
 
 class LoggingContext:
+    """
+    Specialized logging class meant to capture log output as well as output from STDOUT - this is needed
+    to log bash output.  Includes a streamhandler for bash output, and logs to console and file with
+    different log levels.  The commandline flag -d enables debug mode for console.
+    """
 
     def __init__(self, console_level=logging.DEBUG, descriptor=""):
+        """
+        Set log level and descriptor
+        :param console_level: debug if not specified
+        :param descriptor: description for the log output - platform name and version by default
+        """
 
-        format_string = "%(asctime)s " + descriptor + "  [%(name)-8.8s]  [%(levelname)-8.8s]  :::  %(message)s"
+        format_string = "%(asctime)s " + descriptor + "  [%(name)-7.7s]  [%(levelname)-6.6s]  :::  %(message)s"
         self.formatter = logging.Formatter(format_string, "%Y-%m-%d %H:%M:%S")
-
         self.original_stdout = sys.stdout
+
+        # Assign extended logging class to provide additional log functionality
         logging.setLoggerClass(self.InputLogger)
 
+        # Root logger - set to debug to capture all output
         logger = logging.getLogger('')
         logger.setLevel(logging.DEBUG)
 
+        # File handler
         f_handler = logging.FileHandler('ust_install.log', 'w')
         f_handler.setFormatter(self.formatter)
         f_handler.setLevel(logging.DEBUG)
 
+        # Console handler
         ch = logging.StreamHandler()
         ch.setLevel(console_level)
         ch.setFormatter(self.formatter)
@@ -368,16 +503,23 @@ class LoggingContext:
         logger.addHandler(ch)
         logger.addHandler(f_handler)
 
+        # Redirect STDOUT and STDERR to the log stream
         sys.stderr = sys.stdout = self.StreamLogger(logging.getLogger("main"), logging.INFO)
 
+    # Return new logger with properties set for extension
     def getLogger(self, name):
-
         logger = logging.getLogger(name)
         logger.formatter = self.formatter
         logger.original_stdout = self.original_stdout
         return logger
 
     class InputLogger(logging.Logger):
+        """
+        Custom logging class.  Since install script requires user interaction, the default logger
+        is extended to include supporting functionality while maintaining the look and feel of the
+        logger.  This includes getting user input in the form of a value as well as prompting
+        for a y/n question.
+        """
         def __init__(self, name):
             logging.Logger.__init__(self, name)
             self.logger = super(LoggingContext.InputLogger, self)
@@ -385,6 +527,7 @@ class LoggingContext:
             self.formatter = None
             self.name = name
 
+        # Ask a question, restricting response to "y", "n" or enter (default to "y")
         def question(self, message):
             while True:
                 ans = str(self.input(message)).lower()
@@ -393,6 +536,9 @@ class LoggingContext:
                 else:
                     return False if ans == "n" else True
 
+        # Get user input.  This requires special steps in order to preserve lines.  To accomplish this,
+        # STDOUT is set to normal, and a log string is captured as the message.  Used with STDIN, the appearance
+        # is maintained and a value can be captured.
         def input(self, message):
             current_stdout = sys.stdout
             sys.stdout = self.original_stdout
@@ -402,14 +548,17 @@ class LoggingContext:
             self.logger.debug(message + " " + r)
             return r
 
+        # Creates a log string of the form log formatter, which can be printed alongside an input prompt.
         def getLogString(self, msg):
             r = logging.LogRecord(self.name, logging.INFO, "", 1, msg, None, None)
             return self.formatter.format(r)
 
+        # Padding function for improving visual appearance of certificate subject fields
         def pad(self, string, padlen=15):
             size = (padlen - len(string))
             return string + " " * max(size, 0)
 
+    # Streamhandler for STDOUT and STDERR output
     class StreamLogger(object):
         def __init__(self, logger, log_level):
             self.logger = logger
