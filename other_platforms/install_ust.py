@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright (c) 2019 Adobe Inc.  All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,10 +17,25 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import os
+
+prereq = []
+inst_pip = False
+
+try: import pip
+except: inst_pip = True
+try: import six
+except ImportError: prereq.append('six')
+try: import cryptography
+except ImportError: prereq.append('cryptography')
+
+if inst_pip and len(prereq) > 0:
+    os.system('curl https://bootstrap.pypa.io/get-pip.py | sudo python -')
+
+for l in prereq: os.system('sudo pip install' + l)
 
 import datetime
 import logging
-import os
 import platform
 import re
 import shutil
@@ -39,16 +52,13 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
-
-try:
-    from urllib.request import urlretrieve
-except ImportError:
-    from urllib import urlretrieve
+from six.moves.urllib.request import urlretrieve
 
 parser = ArgumentParser()
 parser.add_argument('-d', '--debug', action='store_true')
 args = parser.parse_args()
 console_level = logging.DEBUG if args.debug else logging.INFO
+
 
 # Platform specific information.  Used to determine which version of UST to download,
 # as well as to specify the install process for openSSL.
@@ -63,20 +73,20 @@ meta = {
                            'sudo apt-get -y install libssl-dev'],
     },
     'centos': {
-        'update_cmd': 'sudo apt-get update',
+        'update_cmd': 'yum check-update',
         'python_req': {
-            '16': '2.7',
+            '7.': '2.7',
             '17': '2.7',
             '18': '3.6'},
-        'openssl_script': ['sudo apt-get -y install openssl',
-                           'sudo apt-get -y install libssl-dev'],
+        'openssl_script': ['sudo yum -y install openssl'],
+
     }
 }
 
 # Intro banner!
 intro = [
     "",
-    "Adobe Systems, Inc© - 2019",
+    "Adobe Systems, Inc - 2019",
     "=========================================================",
     "{0} {1} - {2}",
     "",
@@ -120,7 +130,7 @@ class ssl_cert_generator:
 
     # Return a random hex value of specified length
     def rnd(self, size=6):
-        return str.upper(binascii.b2a_hex(os.urandom(size)))
+        return str.upper(str(binascii.b2a_hex(os.urandom(size)).decode()))
 
     # Get user input for all fields in subject
     # User default value if empty string is input
@@ -142,7 +152,7 @@ class ssl_cert_generator:
         """
 
         valid = True
-        if  len(subject['cc']) != 2:
+        if len(subject['cc']) != 2:
             valid = False
             self.logger.info("Country code must be exactly 2 characters long...")
         if re.search('[^A-Za-z]', subject['cc']):
@@ -177,7 +187,7 @@ class ssl_cert_generator:
             if self.validate_fields(subject):
                 if self.logger.question("Is this information correct (y/n) [y]?  "): break
 
-        # Build X509 - note: unicode formatting is required
+        # Build X509 - note: six.ucode formatting is required
         return x509.Name([
             x509.NameAttribute(NameOID.COUNTRY_NAME, six.u(subject['cc'])),
             x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, six.u(subject['st'])),
@@ -206,7 +216,6 @@ class ssl_cert_generator:
             key_size=2048,
             backend=default_backend())
 
-
     def generate(self):
         """
         Certificate generation entry point.  Creates a key, certificate, and then writes files to
@@ -222,8 +231,8 @@ class ssl_cert_generator:
         key = self.get_key()
         cert = self.get_certificate(key)
 
-        certfile =  self.config['ust_directory'] + os.sep + "certificate_pub.crt"
-        keyfile =  self.config['ust_directory'] + os.sep + "private.key"
+        certfile = self.config['ust_directory'] + os.sep + "certificate_pub.crt"
+        keyfile = self.config['ust_directory'] + os.sep + "private.key"
 
         # Write private key
         self.logger.info("Writing private key to file: " + keyfile)
@@ -240,6 +249,7 @@ class ssl_cert_generator:
             f.write(cert.public_bytes(serialization.Encoding.PEM))
 
         self.logger.info("SSL certificate generation complete!")
+
 
 class web_util:
     """
@@ -307,10 +317,11 @@ class bash_util:
 
     # Starts a shell process.  Inserts "y" key after command  to avoid hangups for shell prompts
     def shell(self, cmd):
-        p = Popen(cmd, shell=True, stdout=PIPE, stdin=PIPE, stderr=STDOUT)
-        for line in iter(p.stdout.readline, ''):
-            p.stdin.write(b'y\n')
-            self.logger.debug(line.rstrip('\n'))
+
+        p = Popen(cmd.split(" "),  stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+        for line in iter(p.stdout.readline, b''):
+           #$ p.stdin.write(b'y\n')
+            self.logger.debug(line.decode().rstrip('\n'))
 
     # Runs a shell command, but captures the output
     def shell_out(self, cmd):
@@ -322,7 +333,7 @@ class bash_util:
     # cannot be substituted for 2.7.  Requirements defined in meta dictionary at top of file.
     def check_python_version(self, major):
         try:
-            var = re.search("\d.*", self.shell_out("python" + str(major) + " -V")).group()
+            var = re.search(major, self.shell_out("python" + str(major) + " -V").decode()).group()
         except:
             self.logger.critical("Your system does not meet the minimum requirements for UST.  Please install"
                                  " python " + str(major) + ".* and re-run the setup.")
@@ -343,6 +354,7 @@ class main:
     """
     Main class.  Gathers installation information, and then executes the run() method to kick off process.
     """
+
     def __init__(self):
 
         platform_details = platform.linux_distribution()
@@ -367,7 +379,7 @@ class main:
         self.config['platform']['host_name'] = platform_details[2]
         self.config['platform']['host_version'] = platform_details[1]
         self.config['platform']['major_version'] = platform_details[1][:2]
-        self.config['ust_directory'] =  os.path.abspath("adobe-user-sync-tool")
+        self.config['ust_directory'] = os.path.abspath("adobe-user-sync-tool")
         self.config['update_cmd'] = hostkey['update_cmd']
         self.config['openssl'] = hostkey['openssl_script']
         self.config['python_version'] = hostkey['python_req'][platform_details[1][:2]]
@@ -377,7 +389,7 @@ class main:
         self.bash = bash_util(self.loggingContext)
         self.ssl_gen = ssl_cert_generator(self.loggingContext, self.config)
 
-        #Finish building resources by fetching the API information from GitHub
+        # Finish building resources by fetching the API information from GitHub
         self.web.fetch_resources(self.config)
 
     def run(self):
@@ -402,7 +414,7 @@ class main:
     # Creates a shell script to execute specified command.  For run_ust and ssl scripts.
     def create_shell(self, filename, command):
         filename = os.path.abspath(filename)
-        self.logger.info(filename)
+        self.logger.info("Create: " + filename)
         text_file = open(filename, "w")
         text_file.write(command)
         text_file.close()
@@ -520,6 +532,7 @@ class LoggingContext:
         logger.  This includes getting user input in the form of a value as well as prompting
         for a y/n question.
         """
+
         def __init__(self, name):
             logging.Logger.__init__(self, name)
             self.logger = super(LoggingContext.InputLogger, self)
@@ -543,9 +556,9 @@ class LoggingContext:
             current_stdout = sys.stdout
             sys.stdout = self.original_stdout
             sys.stdout.write(self.getLogString(message + " ")),
+            sys.stdout.flush()
             r = sys.stdin.readline().rstrip()
             sys.stdout = current_stdout
-            self.logger.debug(message + " " + r)
             return r
 
         # Creates a log string of the form log formatter, which can be printed alongside an input prompt.
@@ -567,6 +580,9 @@ class LoggingContext:
         def write(self, message):
             for line in message.rstrip().splitlines():
                 self.logger.log(self.log_level, line.rstrip())
+
+        def flush(self):
+            pass
 
 
 main().run()
