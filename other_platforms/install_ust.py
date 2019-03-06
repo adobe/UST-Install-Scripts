@@ -17,30 +17,56 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
+import importlib
+import subprocess
 import os
+import sys
 
-prereq = []
-inst_pip = False
+checked_modules = ["binascii", "six", "cryptography", "pip"]
+needed_modules = []
 
-try: import pip
-except: inst_pip = True
-try: import six
-except ImportError: prereq.append('six')
-try: import cryptography
-except ImportError: prereq.append('cryptography')
+print("\nUser Sync Tool Installation")
+print("(C) Adobe Systems Inc, 2009")
+print("https://github.com/adobe-apiplatform/user-sync.py")
+print("\nRunning pre-install checks...")
 
-if inst_pip and len(prereq) > 0:
-    os.system('curl https://bootstrap.pypa.io/get-pip.py | sudo python -')
+if sys.version_info.major + sys.version_info.minor != 9:
+    print("Unsupported Python version - please re-run with 2.7 or 3.6")
+    exit()
 
-for l in prereq: os.system('sudo pip install' + l)
+if os.geteuid() != 0:
+    print("You must run this script as root: sudo python install_ust.py...")
+  #  exit()
+
+for m in checked_modules:
+    try:
+        importlib.import_module(m)
+    except ImportError:
+        needed_modules.append(m)
+
+if "pip" in needed_modules and len(needed_modules) > 1:
+    print("Installing dependencies: pip")
+    subprocess.check_output('curl https://bootstrap.pypa.io/get-pip.py | sudo python -', shell=True)
+    needed_modules.remove("pip")
+
+for m in needed_modules:
+    print("Installing required module: " + m)
+    subprocess.check_output('sudo pip install ' + m, shell=True)
+
+for m in needed_modules:
+    try:
+        importlib.import_module(m)
+    except ImportError:
+        print("Setup failed to install module: " + m + " and must stop.  "
+                        "Please re-run setup after installing the missing dependencies")
+
 
 import datetime
 import logging
 import platform
 import re
 import shutil
-import subprocess
-import sys
 import tarfile
 import binascii
 import six
@@ -59,28 +85,14 @@ parser.add_argument('-d', '--debug', action='store_true')
 args = parser.parse_args()
 console_level = logging.DEBUG if args.debug else logging.INFO
 
+# Platform specific scripts to be run during install
+scripts = {
+    'ubuntu': ['sudo apt-get update',
+               'sudo apt-get -y install openssl',
+               'sudo apt-get -y install libssl-dev'],
 
-# Platform specific information.  Used to determine which version of UST to download,
-# as well as to specify the install process for openSSL.
-meta = {
-    'ubuntu': {
-        'update_cmd': 'sudo apt-get update',
-        'python_req': {
-            '16': '2.7',
-            '17': '2.7',
-            '18': '3.6'},
-        'openssl_script': ['sudo apt-get -y install openssl',
-                           'sudo apt-get -y install libssl-dev'],
-    },
-    'centos': {
-        'update_cmd': 'yum check-update',
-        'python_req': {
-            '7.': '2.7',
-            '17': '2.7',
-            '18': '3.6'},
-        'openssl_script': ['sudo yum -y install openssl'],
-
-    }
+    'centos': ['yum check-update',
+               'sudo yum -y install openssl'],
 }
 
 # Intro banner!
@@ -98,10 +110,143 @@ intro = [
     "",
     "Linux Quick Install for UST {3} ",
     "https://github.com/adobe/UST-Install-Scripts",
+    "https://github.com/adobe-apiplatform/user-sync.py",
     "=========================================================",
     ""
 ]
 
+
+
+print("Finished pre-install tasks, beginning process... \n")
+
+
+class main:
+    """
+    Main class.  Gathers installation information, and then executes the run() method to kick off process.
+    """
+
+    def __init__(self):
+
+        installPath = "adobe-user-sync-tool"
+        host = platform.linux_distribution()
+
+        self.loggingContext = \
+            LoggingContext(console_level=console_level, descriptor=("{0} {1}").format(host[0], host[1]))
+
+        # DI
+        self.web = web_util(self.loggingContext)
+        self.bash = bash_util(self.loggingContext)
+        self.ssl_gen = ssl_cert_generator(self.loggingContext, os.path.abspath(installPath))
+
+        # Prep
+        self.logger = self.loggingContext.getLogger("main")
+        self.config = {'platform': {}, 'resources': {}}
+        self.config['platform']['host_platform'] = host[0]
+        self.config['platform']['host_name'] = host[2]
+        self.config['platform']['host_version'] = host[1]
+        self.config['platform']['major_version'] = host[1][:2]
+        self.config['platform']['host_key'] = self.get_current_host(host[0])
+
+        self.config['ust_directory'] = os.path.abspath(installPath)
+        self.config['python_version'] = ("{0}.{1}").format(sys.version_info.major, sys.version_info.minor)
+        self.config['custom_script'] = scripts[self.config['platform']['host_key']]
+
+        # Finish building resources by fetching the API information from GitHub
+        self.web.fetch_resources(self.config)
+
+    # Determine which platform the script is running on
+    def get_current_host(self, host):
+        if (bool(re.search("(ubuntu)", host, re.I))):
+            return "ubuntu"
+        elif (bool(re.search("(cent)|(fedora)|(red)", host, re.I))):
+            return "centos"
+        else:
+            self.logger.critical("Unknown or unsupported platform. Windows, Ubuntu or CentOS/RedHat/Fedora "
+                                 "and Python 2.7 or 3.6 are required to use the User Sync Tool.  For more information,"
+                                 "visit https://github.com/adobe-apiplatform/user-sync.py")
+
+    def run(self):
+        """Top level entry point.
+        Install process begins here
+        Version check -> UST download -> dependency installation -> SSL creation
+        """
+        self.show_intro()
+        self.install_ust()
+        self.bash.custom_script(self.config['custom_script'])
+        self.ssl_gen.generate()
+
+        self.logger.info("")
+        self.logger.info("Installation complete!  Files are located in: " + self.config['ust_directory'])
+        self.logger.info("Please follow the next steps for configuring the sync tool.")
+        self.logger.info("For setup details, see: https://helpx.adobe.com/enterprise/using/user-sync.html")
+        self.logger.info("Documentation: https://adobe-apiplatform.github.io/user-sync.py/en/success-guide/")
+        self.logger.info("")
+        self.logger.info("")
+
+    # Creates a shell script to execute specified command.  For run_ust and ssl scripts.
+    def create_shell(self, filename, command):
+        filename = os.path.abspath(filename)
+        self.logger.info("Create: " + filename)
+        text_file = open(filename, "w")
+        text_file.write(command)
+        text_file.close()
+
+    def install_ust(self):
+        """
+        Process for installing UST.  This amounts to downloading UST itself, the examples file, and
+        extracting them all into the installation directory.  The execution shell scripts are also generated
+        here along with the SSL regeneration script.
+        :return:
+        """
+
+        self.logger.info("Beginning UST installation")
+
+        ust_dir = self.config['ust_directory']
+        conf_dir = os.path.abspath(os.path.join(ust_dir, 'examples', 'config files - basic'))
+
+        self.logger.info("Creating directory " + ust_dir)
+        shutil.rmtree(ust_dir, ignore_errors=True)
+        os.mkdir(ust_dir)
+
+        # Download UST and examples
+        self.web.download(self.config['resources']['examples_url'], ust_dir)
+        self.web.download(self.config['resources']['ust_url'], ust_dir)
+
+        self.logger.info("Creating configuration files... ")
+        self.copy_to(os.path.join(conf_dir, "connector-ldap.yml"), ust_dir)
+        self.copy_to(os.path.join(conf_dir, "connector-umapi.yml"), ust_dir)
+        self.copy_to(os.path.join(conf_dir, "user-sync-config.yml"), ust_dir)
+
+        self.logger.info("Creating shell scripts... ")
+        self.create_shell(os.path.join(ust_dir, "run-user-sync-test.sh"),
+                          "#!/usr/bin/env bash\n./user-sync --users mapped --process-groups -t")
+        self.create_shell(os.path.join(ust_dir, "run-user-sync-live.sh"),
+                          "#!/usr/bin/env bash\n./user-sync --users mapped --process-groups")
+        self.create_shell(os.path.join(ust_dir, "sslCertGen.sh"),
+                          "#!/usr/bin/env bash\nopenssl req -x509 -sha256 -nodes -days 9125 "
+                          "-newkey rsa:2048 -keyout private.key -out certificate_pub.crt")
+
+        # Set folder permissions to allow editing of .yml files
+        self.logger.info("Setting folder permissions to 777... ")
+        self.bash.shell("sudo chmod 777 -R " + ust_dir)
+        self.logger.info("UST installation finished... ")
+
+    # Logged file copier
+    def copy_to(self, src, dest):
+        src = os.path.abspath(src)
+        dest = os.path.abspath(dest)
+        self.logger.info("Copy " + src + " to " + dest)
+        shutil.copy(src, dest)
+
+    # Prints a pretty UST banner!
+    def show_intro(self):
+        for s in intro:
+            self.logger.info(
+                str.format(s,
+                           self.config['platform']['host_platform'],
+                           self.config['platform']['host_version'],
+                           self.config['platform']['host_name'],
+                           self.config['resources']['ust_version']))
 
 class ssl_cert_generator:
     """
@@ -112,13 +257,13 @@ class ssl_cert_generator:
     in the installation folder
     """
 
-    def __init__(self, loggingContext, config):
+    def __init__(self, loggingContext, outputPath):
         """
         :param loggingContext:
         :param config: inherit top level configuration for directories
         """
         self.logger = loggingContext.getLogger("sslGen")
-        self.config = config
+        self.outputPath= outputPath
 
         # Key reference for subject field names
         self.keys = {
@@ -231,8 +376,8 @@ class ssl_cert_generator:
         key = self.get_key()
         cert = self.get_certificate(key)
 
-        certfile = self.config['ust_directory'] + os.sep + "certificate_pub.crt"
-        keyfile = self.config['ust_directory'] + os.sep + "private.key"
+        certfile = self.outputPath + os.sep + "certificate_pub.crt"
+        keyfile = self.outputPath + os.sep + "private.key"
 
         # Write private key
         self.logger.info("Writing private key to file: " + keyfile)
@@ -297,7 +442,7 @@ class web_util:
         config['resources'][
             'ust_url'] = "https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-"
 
-        isPy3 = config['python_version'].startswith("3")
+        isPy3 = config['python_version'] == "3.6"
 
         if config['platform']['host_key'] == "ubuntu":
             config['resources']['ust_url'] += "ubuntu1604-py367.tar.gz" if isPy3 else "ubuntu1604-py2715.tar.gz"
@@ -311,13 +456,11 @@ class bash_util:
     Methods for working with the command line.  Includes shell execution, shellscript creation and
     dependency management
     """
-
     def __init__(self, loggingContext):
         self.logger = loggingContext.getLogger("bash")
 
     # Starts a shell process.  Inserts "y" key after command  to avoid hangups for shell prompts
     def shell(self, cmd):
-
         p = Popen(cmd.split(" "),  stdout=PIPE, stdin=PIPE, stderr=STDOUT)
         for line in iter(p.stdout.readline, b''):
            #$ p.stdin.write(b'y\n')
@@ -329,153 +472,33 @@ class bash_util:
         self.logger.debug(out.decode().rstrip('\n'))
         return out
 
-    # Determines installed python version and compares to the minimum requirement.  Requirement is exact - Python 3.6
-    # cannot be substituted for 2.7.  Requirements defined in meta dictionary at top of file.
-    def check_python_version(self, major):
+    # Checks for presence of python - try-catch is necessare, since shell command will throw an error if not present
+    def is_pyver_installed(self, major):
         try:
             var = re.search(major, self.shell_out("python" + str(major) + " -V").decode()).group()
+            return True
         except:
-            self.logger.critical("Your system does not meet the minimum requirements for UST.  Please install"
-                                 " python " + str(major) + ".* and re-run the setup.")
-            exit()
+            return False
+
+    # Determines installed python version and terminates if neither 2.7 nor 3.6 are found
+    def get_python_version(self):
+        vers = str(sys.version_info.major) + "." + str(sys.version_info.minor)
+        if self.is_pyver_installed("3.6"):
+            return "3.6"
+        elif self.is_pyver_installed("2.7"):
+            return "2.7"
+
+        self.logger.critical("Your system does not meet the minimum requirements for UST.  Please install"
+                             " Python 2.7 or 3.6 and re-run the setup (3.7 will NOT work).")
+        exit()
 
     # Uses the install command after updating (apt-get update, apt-get install) to enable openSSL for future cert
     # generation if needed.
-    def install_dependencies(self, config):
-        self.logger.info("Update package repositories ")
-        self.shell(config['update_cmd'])
-
-        self.logger.info("Installing openSSL")
-        for c in config['openssl']:
+    def custom_script(self, scripts):
+        self.logger.info("Executing custom scripts... ")
+        for c in scripts:
+            self.logger.info(c)
             self.shell(c)
-
-
-class main:
-    """
-    Main class.  Gathers installation information, and then executes the run() method to kick off process.
-    """
-
-    def __init__(self):
-
-        platform_details = platform.linux_distribution()
-
-        # Build base logging context from platform information
-        self.loggingContext = LoggingContext(console_level=console_level, descriptor=("{0} {1}")
-                                             .format(platform_details[0], platform_details[1]))
-
-        self.logger = self.loggingContext.getLogger("main")
-        self.config = {
-            'platform': {},
-            'resources': {}}
-
-        # Determine which platform the script is running on
-        if (bool(re.search("(ubuntu)", platform_details[0], re.I))):
-            self.config['platform']['host_key'] = "ubuntu"
-        elif (bool(re.search("(cent)|(fedora)|(red)", platform_details[0], re.I))):
-            self.config['platform']['host_key'] = "centos"
-
-        hostkey = meta[self.config['platform']['host_key']]
-        self.config['platform']['host_platform'] = platform_details[0]
-        self.config['platform']['host_name'] = platform_details[2]
-        self.config['platform']['host_version'] = platform_details[1]
-        self.config['platform']['major_version'] = platform_details[1][:2]
-        self.config['ust_directory'] = os.path.abspath("adobe-user-sync-tool")
-        self.config['update_cmd'] = hostkey['update_cmd']
-        self.config['openssl'] = hostkey['openssl_script']
-        self.config['python_version'] = hostkey['python_req'][platform_details[1][:2]]
-
-        # DI
-        self.web = web_util(self.loggingContext)
-        self.bash = bash_util(self.loggingContext)
-        self.ssl_gen = ssl_cert_generator(self.loggingContext, self.config)
-
-        # Finish building resources by fetching the API information from GitHub
-        self.web.fetch_resources(self.config)
-
-    def run(self):
-        """Top level entry point.
-        Install process begins here
-        Version check -> UST download -> dependency installation -> SSL creation
-        """
-        self.show_intro()
-        self.bash.check_python_version(self.config['python_version'])
-        self.install_ust()
-        self.bash.install_dependencies(self.config)
-        self.ssl_gen.generate()
-
-        self.logger.info("")
-        self.logger.info("Installation complete!  Files are located in: " + self.config['ust_directory'])
-        self.logger.info("Please follow the next steps for configuring the sync tool.")
-        self.logger.info("For setup details, see: https://helpx.adobe.com/enterprise/using/user-sync.html")
-        self.logger.info("Documentation: https://adobe-apiplatform.github.io/user-sync.py/en/success-guide/")
-        self.logger.info("")
-        self.logger.info("")
-
-    # Creates a shell script to execute specified command.  For run_ust and ssl scripts.
-    def create_shell(self, filename, command):
-        filename = os.path.abspath(filename)
-        self.logger.info("Create: " + filename)
-        text_file = open(filename, "w")
-        text_file.write(command)
-        text_file.close()
-
-    def install_ust(self):
-        """
-        Process for installing UST.  This amounts to downloading UST itself, the examples file, and
-        extracting them all into the installation directory.  The execution shell scripts are also generated
-        here along with the SSL regeneration script.
-        :return:
-        """
-
-        self.logger.info("Beginning UST installation")
-
-        ust_dir = self.config['ust_directory']
-        conf_dir = os.path.abspath(os.path.join(ust_dir, 'examples', 'config files - basic'))
-
-        self.logger.info("Creating directory " + ust_dir)
-        shutil.rmtree(ust_dir, ignore_errors=True)
-        os.mkdir(ust_dir)
-
-        # Download UST and examples
-        self.web.download(self.config['resources']['examples_url'], ust_dir)
-        self.web.download(self.config['resources']['ust_url'], ust_dir)
-
-        self.logger.info("Creating configuration files... ")
-        self.copy_to(os.path.join(conf_dir, "connector-ldap.yml"), ust_dir)
-        self.copy_to(os.path.join(conf_dir, "connector-umapi.yml"), ust_dir)
-        self.copy_to(os.path.join(conf_dir, "user-sync-config.yml"), ust_dir)
-
-        self.logger.info("Creating shell scripts... ")
-        self.create_shell(os.path.join(ust_dir, "run-user-sync-test.sh"),
-                          "#!/usr/bin/env bash\n./user-sync --users mapped --process-groups -t")
-        self.create_shell(os.path.join(ust_dir, "run-user-sync-live.sh"),
-                          "#!/usr/bin/env bash\n./user-sync --users mapped --process-groups")
-        self.create_shell(os.path.join(ust_dir, "sslCertGen.sh"),
-                          "#!/usr/bin/env bash\nopenssl req -x509 -sha256 -nodes -days 9125 "
-                          "-newkey rsa:2048 -keyout private.key -out certificate_pub.crt")
-
-        # Set folder permissions to allow editing of .yml files
-        self.logger.info("Setting folder permissions to 777... ")
-        self.bash.shell("sudo chmod 777 -R " + ust_dir)
-        self.logger.info("UST installation finished... ")
-
-    # Logged file copier
-    def copy_to(self, src, dest):
-        src = os.path.abspath(src)
-        dest = os.path.abspath(dest)
-        self.logger.info("Copy " + src + " to " + dest)
-        shutil.copy(src, dest)
-
-    # Prints a pretty UST banner!
-    def show_intro(self):
-        for s in intro:
-            self.logger.info(
-                str.format(s,
-                           self.config['platform']['host_platform'],
-                           self.config['platform']['host_version'],
-                           self.config['platform']['host_name'],
-                           self.config['resources']['ust_version']))
-
 
 class LoggingContext:
     """
