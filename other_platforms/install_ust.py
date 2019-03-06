@@ -27,6 +27,7 @@ import tarfile
 import importlib
 import os
 import sys
+import json
 from subprocess import Popen, PIPE, STDOUT, check_output
 from argparse import ArgumentParser
 
@@ -37,6 +38,10 @@ parser.add_argument('-fs', '--force-sudo', action='store_true')
 args = parser.parse_args()
 console_level = logging.DEBUG if args.debug else logging.INFO
 
+UNSUPPORTED_MESSAGE = "Unknown or unsupported platform. Windows, Ubuntu or CentOS/RedHat/Fedora" \
+                      "and Python 2.7 or 3.6 are required to use the User Sync Tool.  For more information,"\
+                      "visit https://github.com/adobe-apiplatform/user-sync.py"
+
 print("\nUser Sync Tool Installation")
 print("(C) Adobe Systems Inc, 2009")
 print("https://github.com/adobe-apiplatform/user-sync.py")
@@ -44,13 +49,13 @@ print("\nRunning pre-install checks...")
 
 python_version = ("{0}.{1}").format(sys.version_info.major, sys.version_info.minor)
 
-if os.geteuid() != 0 and not args.force_sudo:
+if platform.win32_ver()[0] == '' and os.geteuid() != 0 and not args.force_sudo:
     print("You must run this script as root: sudo python install_ust.py...")
     print("if this is in error, please use --force-sudo to try anyway\n")
     exit()
 
 if python_version != "2.7" and  python_version != "3.6":
-    print("Unsupported Python version - please re-run with 2.7 or 3.6")
+    print(UNSUPPORTED_MESSAGE)
     exit()
 
 checked_modules = ["binascii", "six", "cryptography", "pip"]
@@ -63,7 +68,11 @@ for m in checked_modules:
 
 if "pip" in needed_modules and len(needed_modules) > 1:
     print("Installing dependencies: pip")
-    check_output('curl https://bootstrap.pypa.io/get-pip.py | sudo python -', shell=True)
+    try:
+        check_output('curl https://bootstrap.pypa.io/get-pip.py | sudo python -', shell=True)
+    except:
+        check_output('curl https://bootstrap.pypa.io/get-pip.py | sudo python3 -', shell=True)
+
 
 if "pip" in needed_modules: needed_modules.remove("pip")
 
@@ -79,7 +88,6 @@ for m in needed_modules:
                         "Please re-run setup after installing the missing dependencies")
         exit()
 
-
 # Remaining imports
 import six
 import binascii
@@ -89,11 +97,9 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
-from six.moves.urllib.request import urlretrieve
+from six.moves.urllib.request import urlretrieve, urlopen
 
-
-
-
+print("Finished pre-install tasks, beginning process... \n")
 
 # Platform specific scripts to be run during install
 scripts = {
@@ -103,6 +109,26 @@ scripts = {
 
     'centos': ['yum check-update',
                'sudo yum -y install openssl'],
+    'win': []
+}
+
+base_configuration = {
+    'ustver': '2.4',
+    'git_token': "4d46942c2e588fd8a87e57d52ccf17252fb7eed0",
+    'ust_repo': "https://api.github.com/repos/adobe-apiplatform/user-sync.py/releases/latest?access_token=",
+    'examplesurl': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/examples.tar.gz',
+    'ubuntu': {
+        '2.7':'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-ubuntu1604-py2715.tar.gz',
+        '3.6':'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-ubuntu1604-py367.tar.gz'
+    },
+    'centos': {
+        '2.7': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-centos7-py275.tar.gz',
+        '3.6': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-centos7-py367.tar.gz'
+    },
+    'win': {
+        '2.7': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-win64-py2715.tar.gz',
+        '3.6': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-win64-py366.tar.gz'
+    },
 }
 
 # Intro banner!
@@ -124,8 +150,6 @@ intro = [
     "=========================================================",
     ""
 ]
-
-print("Finished pre-install tasks, beginning process... \n")
 
 
 class Main:
@@ -169,9 +193,8 @@ class Main:
         elif (bool(re.search("(cent)|(fedora)|(red)", host, re.I))):
             return "centos"
         else:
-            self.logger.critical("Unknown or unsupported platform. Windows, Ubuntu or CentOS/RedHat/Fedora "
-                                 "and Python 2.7 or 3.6 are required to use the User Sync Tool.  For more information,"
-                                 "visit https://github.com/adobe-apiplatform/user-sync.py")
+            self.logger.critical(UNSUPPORTED_MESSAGE)
+            exit()
 
     def run(self):
         """Top level entry point.
@@ -407,8 +430,8 @@ class SslCertGenerator:
 
 class WebUtil:
     """
-    Handles web and web-related requests using urrlib from the standard lib.  Includes file downloads
-    and dynamic resource fetching from the GitHub API in order to maintain the latest verison of UST.
+    Handles web and web-related requests using urllib from the standard lib.  Includes file downloads
+    and dynamic resource fetching from the GitHub API in order to maintain the latest version of UST.
     Uses a generic GitHub token for stable API access
     """
 
@@ -444,20 +467,33 @@ class WebUtil:
         :return:
         """
 
-        # Hardcoded - temporarily until API integration
-        config['resources']['ust_version'] = "2.4"
-        config['resources'][
-            'examples_url'] = "https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/examples.tar.gz"
-        config['resources'][
-            'ust_url'] = "https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-"
+        pyver = config['python_version']
+        hostkey = config['platform']['host_key']
+        url = base_configuration['ust_repo'] + base_configuration['git_token']
+        fallback = False
 
-        isPy3 = config['python_version'] == "3.6"
+        try:
+            data = json.loads(urlopen(url).read())
 
-        if config['platform']['host_key'] == "ubuntu":
-            config['resources']['ust_url'] += "ubuntu1604-py367.tar.gz" if isPy3 else "ubuntu1604-py2715.tar.gz"
+            for asset in data['assets']:
+                if re.search(hostkey, asset['name']) and \
+                        re.search("py" + pyver[0:1], asset['browser_download_url']):
+                    config['resources']['ust_url'] = asset['browser_download_url']
+                elif re.search("examples.tar.gz", asset['name']):
+                    config['resources']['examples_url'] = asset['browser_download_url']
+                config['resources']['ust_version'] = data['tag_name']
 
-        elif config['platform']['host_key'] == "centos":
-            config['resources']['ust_url'] += "centos7-py367.tar.gz" if isPy3 else "centos7-py275.tar.gz"
+        except Exception as e:
+            fallback = True
+            self.logger.info("Error: " + e.message)
+
+        if 'examples_url'not in config['resources'] or 'ust_url' not in config['resources'] or fallback:
+            self.logger.info("Warning: unable to fetch UST data... using fallback default instead...")
+            config['resources']['ust_version'] = base_configuration['ustver']
+            config['resources']['examples_url'] = base_configuration['examplesurl']
+            config['resources']['ust_url'] = base_configuration[hostkey][pyver]
+
+
 
 
 class BashUtil:
@@ -472,7 +508,7 @@ class BashUtil:
     def shell_exec(self, cmd):
         p = Popen(cmd.split(" "),  stdout=PIPE, stdin=PIPE, stderr=STDOUT)
         for line in iter(p.stdout.readline, b''):
-           #$ p.stdin.write(b'y\n')
+            p.stdin.write(b'y\n')
             self.logger.debug(line.decode().rstrip('\n'))
 
     # Uses the install command after updating (apt-get update, apt-get install) to enable openSSL for future cert
