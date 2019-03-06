@@ -28,7 +28,7 @@ import importlib
 import os
 import sys
 import json
-from subprocess import Popen, PIPE, STDOUT, check_output
+from subprocess import Popen, PIPE, STDOUT, check_output, CalledProcessError
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
@@ -39,7 +39,7 @@ args = parser.parse_args()
 console_level = logging.DEBUG if args.debug else logging.INFO
 
 UNSUPPORTED_MESSAGE = "Unknown or unsupported platform. Windows, Ubuntu or CentOS/RedHat/Fedora" \
-                      "and Python 2.7 or 3.6 are required to use the User Sync Tool.  For more information,"\
+                      "and Python 2.7 or 3.6 are required to use the User Sync Tool.  For more information," \
                       "visit https://github.com/adobe-apiplatform/user-sync.py"
 
 print("\nUser Sync Tool Installation")
@@ -47,14 +47,14 @@ print("(C) Adobe Systems Inc, 2009")
 print("https://github.com/adobe-apiplatform/user-sync.py")
 print("\nRunning pre-install checks...")
 
-python_version = ("{0}.{1}").format(sys.version_info.major, sys.version_info.minor)
+python_version = "{0}.{1}".format(sys.version_info.major, sys.version_info.minor)
 
 if platform.win32_ver()[0] == '' and os.geteuid() != 0 and not args.force_sudo:
     print("You must run this script as root: sudo python install_ust.py...")
     print("if this is in error, please use --force-sudo to try anyway\n")
     exit()
 
-if python_version != "2.7" and  python_version != "3.6":
+if python_version != "2.7" and python_version != "3.6":
     print(UNSUPPORTED_MESSAGE)
     exit()
 
@@ -70,11 +70,11 @@ if "pip" in needed_modules and len(needed_modules) > 1:
     print("Installing dependencies: pip")
     try:
         check_output('curl https://bootstrap.pypa.io/get-pip.py | sudo python -', shell=True)
-    except:
+    except CalledProcessError:
         check_output('curl https://bootstrap.pypa.io/get-pip.py | sudo python3 -', shell=True)
 
-
-if "pip" in needed_modules: needed_modules.remove("pip")
+if "pip" in needed_modules:
+    needed_modules.remove("pip")
 
 for m in needed_modules:
     print("Installing required module: " + m)
@@ -85,7 +85,7 @@ for m in needed_modules:
         importlib.import_module(m)
     except ImportError:
         print("Setup failed to install module: " + m + " and must stop.  "
-                        "Please re-run setup after installing the missing dependencies")
+                                                       "Please re-run setup after installing the missing dependencies")
         exit()
 
 # Remaining imports
@@ -118,16 +118,22 @@ base_configuration = {
     'ust_repo': "https://api.github.com/repos/adobe-apiplatform/user-sync.py/releases/latest?access_token=",
     'examplesurl': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/examples.tar.gz',
     'ubuntu': {
-        '2.7':'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-ubuntu1604-py2715.tar.gz',
-        '3.6':'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-ubuntu1604-py367.tar.gz'
+        '2.7': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/'
+               'user-sync-v2.4-ubuntu1604-py2715.tar.gz',
+        '3.6': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/'
+               'user-sync-v2.4-ubuntu1604-py367.tar.gz'
     },
     'centos': {
-        '2.7': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-centos7-py275.tar.gz',
-        '3.6': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-centos7-py367.tar.gz'
+        '2.7': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/'
+               'user-sync-v2.4-centos7-py275.tar.gz',
+        '3.6': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/'
+               'user-sync-v2.4-centos7-py367.tar.gz'
     },
     'win': {
-        '2.7': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-win64-py2715.tar.gz',
-        '3.6': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-win64-py366.tar.gz'
+        '2.7': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/'
+               'user-sync-v2.4-win64-py2715.tar.gz',
+        '3.6': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/'
+               'user-sync-v2.4-win64-py366.tar.gz'
     },
 }
 
@@ -159,27 +165,29 @@ class Main:
 
     def __init__(self):
 
-        installPath = "adobe-user-sync-tool"
+        installpath = "adobe-user-sync-tool"
         host = platform.linux_distribution()
 
         self.loggingcontext = \
-            loggingcontext(console_level=console_level, descriptor=("{0} {1}").format(host[0], host[1]))
+            Loggingcontext(console_level=console_level, descriptor="{0} {1}".format(host[0], host[1]))
 
         # DI
         self.web = WebUtil(self.loggingcontext)
         self.bash = BashUtil(self.loggingcontext)
-        self.ssl_gen = SslCertGenerator(self.loggingcontext, os.path.abspath(installPath))
+        self.ssl_gen = SslCertGenerator(self.loggingcontext, os.path.abspath(installpath))
 
         # Prep
         self.logger = self.loggingcontext.get_logger("main")
-        self.config = {'platform': {}, 'resources': {}}
+        self.config = {
+            'platform': {},
+            'resources': {}}
         self.config['platform']['host_platform'] = host[0]
         self.config['platform']['host_name'] = host[2]
         self.config['platform']['host_version'] = host[1]
         self.config['platform']['major_version'] = host[1][:2]
         self.config['platform']['host_key'] = self.get_current_host(host[0])
 
-        self.config['ust_directory'] = os.path.abspath(installPath)
+        self.config['ust_directory'] = os.path.abspath(installpath)
         self.config['custom_script'] = scripts[self.config['platform']['host_key']]
         self.config['python_version'] = python_version
 
@@ -188,9 +196,9 @@ class Main:
 
     # Determine which platform the script is running on
     def get_current_host(self, host):
-        if (bool(re.search("(ubuntu)", host, re.I))):
+        if bool(re.search("(ubuntu)", host, re.I)):
             return "ubuntu"
-        elif (bool(re.search("(cent)|(fedora)|(red)", host, re.I))):
+        elif bool(re.search("(cent)|(fedora)|(red)", host, re.I)):
             return "centos"
         else:
             self.logger.critical(UNSUPPORTED_MESSAGE)
@@ -280,6 +288,7 @@ class Main:
                            self.config['resources']['ust_version'],
                            self.config['python_version']))
 
+
 class SslCertGenerator:
     """
     SSL Certificate / Keypair generator
@@ -289,13 +298,13 @@ class SslCertGenerator:
     in the installation folder
     """
 
-    def __init__(self, loggingcontext, outputPath):
+    def __init__(self, loggingcontext, outputpath):
         """
         :param loggingcontext:
-        :param config: inherit top level configuration for directories
+        :param outputpath: certificate output path
         """
         self.logger = loggingcontext.get_logger("sslGen")
-        self.outputPath= outputPath
+        self.outputPath = outputpath
 
         # Key reference for subject field names
         self.keys = {
@@ -316,7 +325,8 @@ class SslCertGenerator:
         self.logger.info("")
         for k in self.keys:
             tsub[k] = self.logger.input(self.logger.pad(self.keys[k] + " [" + sub[k] + "]", 30) + ": ")
-            if str.strip(tsub[k]) != "": sub[k] = tsub[k]
+            if str.strip(tsub[k]) != "":
+                sub[k] = tsub[k]
 
         sub['cc'] = str.upper(sub['cc'])
         return sub
@@ -362,7 +372,8 @@ class SslCertGenerator:
             self.logger.info("")
 
             if self.validate_fields(subject):
-                if self.logger.question("Is this information correct (y/n) [y]?  "): break
+                if self.logger.question("Is this information correct (y/n) [y]?  "):
+                    break
 
         # Build X509 - note: six.ucode formatting is required
         return x509.Name([
@@ -438,17 +449,17 @@ class WebUtil:
     def __init__(self, loggingcontext):
         self.logger = loggingcontext.get_logger("webUtil")
 
-    def download(self, url, dir):
+    def download(self, url, outputdir):
         """
         Downloads the specfied URL, and puts it in dir.  If the file is a tar.gz, it is extracted
         and the original file is removed
         :param url: URL for target resource
-        :param dir: Target directory for file
+        :param outputdir: Target directory for file
         :return:
         """
 
         filename = str(url.rpartition('/')[2])
-        filepath = dir + os.sep + filename
+        filepath = outputdir + os.sep + filename
         self.logger.info("Downloading " + filename + " from " + url)
 
         # Download
@@ -456,7 +467,7 @@ class WebUtil:
 
         # Extract if needed
         if filepath.endswith(".tar.gz"):
-            tarfile.open(filepath).extractall(path=dir)
+            tarfile.open(filepath).extractall(path=outputdir)
             os.remove(filepath)
 
     def fetch_resources(self, config):
@@ -487,13 +498,11 @@ class WebUtil:
             fallback = True
             self.logger.info("Error: " + e.message)
 
-        if 'examples_url'not in config['resources'] or 'ust_url' not in config['resources'] or fallback:
+        if 'examples_url' not in config['resources'] or 'ust_url' not in config['resources'] or fallback:
             self.logger.info("Warning: unable to fetch UST data... using fallback default instead...")
             config['resources']['ust_version'] = base_configuration['ustver']
             config['resources']['examples_url'] = base_configuration['examplesurl']
             config['resources']['ust_url'] = base_configuration[hostkey][pyver]
-
-
 
 
 class BashUtil:
@@ -501,12 +510,13 @@ class BashUtil:
     Methods for working with the command line.  Includes shell execution, shellscript creation and
     dependency management
     """
+
     def __init__(self, loggingcontext):
         self.logger = loggingcontext.get_logger("bash")
 
     # Starts a shell process.  Inserts "y" key after command  to avoid hangups for shell prompts
     def shell_exec(self, cmd):
-        p = Popen(cmd.split(" "),  stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+        p = Popen(cmd.split(" "), stdout=PIPE, stdin=PIPE, stderr=STDOUT)
         for line in iter(p.stdout.readline, b''):
             p.stdin.write(b'y\n')
             self.logger.debug(line.decode().rstrip('\n'))
@@ -519,7 +529,8 @@ class BashUtil:
             self.logger.info(c)
             self.shell_exec(c)
 
-class loggingcontext:
+
+class Loggingcontext:
     """
     Specialized logging class meant to capture log output as well as output from STDOUT - this is needed
     to log bash output.  Includes a streamhandler for bash output, and logs to console and file with
@@ -577,7 +588,7 @@ class loggingcontext:
 
         def __init__(self, name):
             logging.Logger.__init__(self, name)
-            self.logger = super(loggingcontext.InputLogger, self)
+            self.logger = super(Loggingcontext.InputLogger, self)
             self.original_stdout = sys.stdout
             self.formatter = None
             self.name = name
