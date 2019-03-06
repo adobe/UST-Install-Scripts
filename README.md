@@ -35,11 +35,11 @@ Configuration of the UST is beyond the scope of this page - please visit to link
 
 The following will install User Sync and related packages on all of the above platforms.  Execute the command on bash shell:
 
-<code>sudo sh -c 'curl -L https://git.io/fhpEz -o tmp; python tmp; rm tmp'</code>
+<code>sudo sh -c 'curl -L https://git.io/fhpuG -o tmp; python tmp; rm tmp'</code>
 
 Or, if **python** is not the correct alias on your system, please use the one you wish to run UST with.  E.g., on Ubuntu 18,
 
-<code>sudo sh -c 'curl -L https://git.io/fhpEz -o tmp; **python3** tmp; rm tmp'</code>
+<code>sudo sh -c 'curl -L https://git.io/fhpuG -o tmp; **python3** tmp; rm tmp'</code>
 
 ### Prerequisites
 
