@@ -11,7 +11,7 @@ The UST should be installed on a VM or stable server if possible - the platforms
  Platform |  Installer
 |------------ | :-------------|
 |<img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/winlogo.png" height="50" width="54"> | **Windows**: <br/> Use the msi based [windows installer](https://github.com/adobe/UST-Install-Scripts/releases/latest) for a streamlined setup process|
-| <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/ubuntulogo.png" height="25" width="25" > <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/redhatlogo.png" height="25" width="25"><br/><img src="https://raw.githubusercontent.com/adobe/UST-Install-Scripts/switch_to_python/contributing/fedora.png" height="25" width="25"> <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/centoslogo.png" height="25" width="25"> | **Linux**: <br/>Follow the [directions below](https://github.com/adobe/UST-Install-Scripts#linux-ubuntu-1204-centos-7-fedora-redhat-susesles-debian-and-macos-os-x-10) to use the bash install scripts (cross platform)
+| <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/ubuntulogo.png" height="25" width="25" > <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/redhatlogo.png" height="25" width="25"><br/><img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/fedora.png" height="25" width="25"> <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/centoslogo.png" height="25" width="25"> | **Linux**: <br/>Follow the [directions below](https://github.com/adobe/UST-Install-Scripts#linux-ubuntu-1204-centos-7-fedora-redhat-susesles-debian-and-macos-os-x-10) to use the bash install scripts (cross platform)
 
 
 <br/>
@@ -35,11 +35,11 @@ Configuration of the UST is beyond the scope of this page - please visit to link
 
 The following will install User Sync and related packages on all of the above platforms.  Execute the command on bash shell:
 
-<code>sudo sh -c 'curl -L https://git.io/fhpEz -o tmp; python tmp; rm tmp'</code>
+<code>sudo sh -c 'curl -L https://git.io/fhpuG -o tmp; python tmp; rm tmp'</code>
 
 Or, if **python** is not the correct alias on your system, please use the one you wish to run UST with.  E.g., on Ubuntu 18,
 
-<code>sudo sh -c 'curl -L https://git.io/fhpEz -o tmp; **python3** tmp; rm tmp'</code>
+<code>sudo sh -c 'curl -L https://git.io/fhpuG -o tmp; **python3** tmp; rm tmp'</code>
 
 ### Prerequisites
 
