@@ -41,7 +41,9 @@ Or, if **python** is not the correct alias on your system, please use the one yo
 
 <code>sudo sh -c 'curl -L https://git.io/fhpEz -o tmp; **python3** tmp; rm tmp'</code>
 
+### Prerequisites
 
+Python 2.7 or 3.6 **must** be pre-installed to use the sync tool - and the install process will exit if this older versions are used!
 
 ### Generated Shell Scripts:
 <b>run-user-sync.sh:</b> Runs UST in live mode with options --users mapped --process-groups<br/>
