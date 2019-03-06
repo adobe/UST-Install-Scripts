@@ -518,7 +518,7 @@ class BashUtil:
     def shell_exec(self, cmd):
         p = Popen(cmd.split(" "), stdout=PIPE, stdin=PIPE, stderr=STDOUT)
         for line in iter(p.stdout.readline, b''):
-            p.stdin.write(b'y\n')
+            #p.stdin.write(b'y\n')
             self.logger.debug(line.decode().rstrip('\n'))
 
     # Uses the install command after updating (apt-get update, apt-get install) to enable openSSL for future cert
