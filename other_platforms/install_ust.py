@@ -18,27 +18,43 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import datetime
+import logging
+import platform
+import re
+import shutil
+import tarfile
 import importlib
-import subprocess
 import os
 import sys
+from subprocess import Popen, PIPE, STDOUT, check_output
+from argparse import ArgumentParser
 
-checked_modules = ["binascii", "six", "cryptography", "pip"]
-needed_modules = []
+parser = ArgumentParser()
+parser.add_argument('-d', '--debug', action='store_true')
+parser.add_argument('-fs', '--force-sudo', action='store_true')
+
+args = parser.parse_args()
+console_level = logging.DEBUG if args.debug else logging.INFO
 
 print("\nUser Sync Tool Installation")
 print("(C) Adobe Systems Inc, 2009")
 print("https://github.com/adobe-apiplatform/user-sync.py")
 print("\nRunning pre-install checks...")
 
-if sys.version_info.major + sys.version_info.minor != 9:
+python_version = ("{0}.{1}").format(sys.version_info.major, sys.version_info.minor)
+
+if os.geteuid() != 0 and not args.force_sudo:
+    print("You must run this script as root: sudo python install_ust.py...")
+    print("if this is in error, please use --force-sudo to try anyway\n")
+    exit()
+
+if python_version != "2.7" and  python_version != "3.6":
     print("Unsupported Python version - please re-run with 2.7 or 3.6")
     exit()
 
-if os.geteuid() != 0:
-    print("You must run this script as root: sudo python install_ust.py...")
-  #  exit()
-
+checked_modules = ["binascii", "six", "cryptography", "pip"]
+needed_modules = []
 for m in checked_modules:
     try:
         importlib.import_module(m)
@@ -47,12 +63,13 @@ for m in checked_modules:
 
 if "pip" in needed_modules and len(needed_modules) > 1:
     print("Installing dependencies: pip")
-    subprocess.check_output('curl https://bootstrap.pypa.io/get-pip.py | sudo python -', shell=True)
-    needed_modules.remove("pip")
+    check_output('curl https://bootstrap.pypa.io/get-pip.py | sudo python -', shell=True)
+
+if "pip" in needed_modules: needed_modules.remove("pip")
 
 for m in needed_modules:
     print("Installing required module: " + m)
-    subprocess.check_output('sudo pip install ' + m, shell=True)
+    check_output('sudo pip install ' + m, shell=True)
 
 for m in needed_modules:
     try:
@@ -60,18 +77,12 @@ for m in needed_modules:
     except ImportError:
         print("Setup failed to install module: " + m + " and must stop.  "
                         "Please re-run setup after installing the missing dependencies")
+        exit()
 
 
-import datetime
-import logging
-import platform
-import re
-import shutil
-import tarfile
-import binascii
+# Remaining imports
 import six
-from argparse import ArgumentParser
-from subprocess import Popen, PIPE, STDOUT
+import binascii
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -80,10 +91,9 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 from six.moves.urllib.request import urlretrieve
 
-parser = ArgumentParser()
-parser.add_argument('-d', '--debug', action='store_true')
-args = parser.parse_args()
-console_level = logging.DEBUG if args.debug else logging.INFO
+
+
+
 
 # Platform specific scripts to be run during install
 scripts = {
@@ -98,7 +108,7 @@ scripts = {
 # Intro banner!
 intro = [
     "",
-    "Adobe Systems, Inc - 2019",
+    "Adobe Systems, Inc - (C) 2019",
     "=========================================================",
     "{0} {1} - {2}",
     "",
@@ -108,19 +118,17 @@ intro = [
     "         \___//__/\___|_|     |___/\_, |_||_\__|",
     "                                   |__/",
     "",
-    "Linux Quick Install for UST {3} ",
+    "Linux Quick Install for UST {3} on Python {4}",
     "https://github.com/adobe/UST-Install-Scripts",
     "https://github.com/adobe-apiplatform/user-sync.py",
     "=========================================================",
     ""
 ]
 
-
-
 print("Finished pre-install tasks, beginning process... \n")
 
 
-class main:
+class Main:
     """
     Main class.  Gathers installation information, and then executes the run() method to kick off process.
     """
@@ -130,16 +138,16 @@ class main:
         installPath = "adobe-user-sync-tool"
         host = platform.linux_distribution()
 
-        self.loggingContext = \
-            LoggingContext(console_level=console_level, descriptor=("{0} {1}").format(host[0], host[1]))
+        self.loggingcontext = \
+            loggingcontext(console_level=console_level, descriptor=("{0} {1}").format(host[0], host[1]))
 
         # DI
-        self.web = web_util(self.loggingContext)
-        self.bash = bash_util(self.loggingContext)
-        self.ssl_gen = ssl_cert_generator(self.loggingContext, os.path.abspath(installPath))
+        self.web = WebUtil(self.loggingcontext)
+        self.bash = BashUtil(self.loggingcontext)
+        self.ssl_gen = SslCertGenerator(self.loggingcontext, os.path.abspath(installPath))
 
         # Prep
-        self.logger = self.loggingContext.getLogger("main")
+        self.logger = self.loggingcontext.get_logger("main")
         self.config = {'platform': {}, 'resources': {}}
         self.config['platform']['host_platform'] = host[0]
         self.config['platform']['host_name'] = host[2]
@@ -148,8 +156,8 @@ class main:
         self.config['platform']['host_key'] = self.get_current_host(host[0])
 
         self.config['ust_directory'] = os.path.abspath(installPath)
-        self.config['python_version'] = ("{0}.{1}").format(sys.version_info.major, sys.version_info.minor)
         self.config['custom_script'] = scripts[self.config['platform']['host_key']]
+        self.config['python_version'] = python_version
 
         # Finish building resources by fetching the API information from GitHub
         self.web.fetch_resources(self.config)
@@ -228,7 +236,7 @@ class main:
 
         # Set folder permissions to allow editing of .yml files
         self.logger.info("Setting folder permissions to 777... ")
-        self.bash.shell("sudo chmod 777 -R " + ust_dir)
+        self.bash.shell_exec("sudo chmod 777 -R " + ust_dir)
         self.logger.info("UST installation finished... ")
 
     # Logged file copier
@@ -246,9 +254,10 @@ class main:
                            self.config['platform']['host_platform'],
                            self.config['platform']['host_version'],
                            self.config['platform']['host_name'],
-                           self.config['resources']['ust_version']))
+                           self.config['resources']['ust_version'],
+                           self.config['python_version']))
 
-class ssl_cert_generator:
+class SslCertGenerator:
     """
     SSL Certificate / Keypair generator
 
@@ -257,12 +266,12 @@ class ssl_cert_generator:
     in the installation folder
     """
 
-    def __init__(self, loggingContext, outputPath):
+    def __init__(self, loggingcontext, outputPath):
         """
-        :param loggingContext:
+        :param loggingcontext:
         :param config: inherit top level configuration for directories
         """
-        self.logger = loggingContext.getLogger("sslGen")
+        self.logger = loggingcontext.get_logger("sslGen")
         self.outputPath= outputPath
 
         # Key reference for subject field names
@@ -396,15 +405,15 @@ class ssl_cert_generator:
         self.logger.info("SSL certificate generation complete!")
 
 
-class web_util:
+class WebUtil:
     """
     Handles web and web-related requests using urrlib from the standard lib.  Includes file downloads
     and dynamic resource fetching from the GitHub API in order to maintain the latest verison of UST.
     Uses a generic GitHub token for stable API access
     """
 
-    def __init__(self, loggingContext):
-        self.logger = loggingContext.getLogger("webUtil")
+    def __init__(self, loggingcontext):
+        self.logger = loggingcontext.get_logger("webUtil")
 
     def download(self, url, dir):
         """
@@ -423,7 +432,7 @@ class web_util:
         urlretrieve(url, filepath)
 
         # Extract if needed
-        if (filepath.endswith(".tar.gz")):
+        if filepath.endswith(".tar.gz"):
             tarfile.open(filepath).extractall(path=dir)
             os.remove(filepath)
 
@@ -451,46 +460,20 @@ class web_util:
             config['resources']['ust_url'] += "centos7-py367.tar.gz" if isPy3 else "centos7-py275.tar.gz"
 
 
-class bash_util:
+class BashUtil:
     """
     Methods for working with the command line.  Includes shell execution, shellscript creation and
     dependency management
     """
-    def __init__(self, loggingContext):
-        self.logger = loggingContext.getLogger("bash")
+    def __init__(self, loggingcontext):
+        self.logger = loggingcontext.get_logger("bash")
 
     # Starts a shell process.  Inserts "y" key after command  to avoid hangups for shell prompts
-    def shell(self, cmd):
+    def shell_exec(self, cmd):
         p = Popen(cmd.split(" "),  stdout=PIPE, stdin=PIPE, stderr=STDOUT)
         for line in iter(p.stdout.readline, b''):
            #$ p.stdin.write(b'y\n')
             self.logger.debug(line.decode().rstrip('\n'))
-
-    # Runs a shell command, but captures the output
-    def shell_out(self, cmd):
-        out = subprocess.check_output(cmd + " 2>&1", shell=True)
-        self.logger.debug(out.decode().rstrip('\n'))
-        return out
-
-    # Checks for presence of python - try-catch is necessare, since shell command will throw an error if not present
-    def is_pyver_installed(self, major):
-        try:
-            var = re.search(major, self.shell_out("python" + str(major) + " -V").decode()).group()
-            return True
-        except:
-            return False
-
-    # Determines installed python version and terminates if neither 2.7 nor 3.6 are found
-    def get_python_version(self):
-        vers = str(sys.version_info.major) + "." + str(sys.version_info.minor)
-        if self.is_pyver_installed("3.6"):
-            return "3.6"
-        elif self.is_pyver_installed("2.7"):
-            return "2.7"
-
-        self.logger.critical("Your system does not meet the minimum requirements for UST.  Please install"
-                             " Python 2.7 or 3.6 and re-run the setup (3.7 will NOT work).")
-        exit()
 
     # Uses the install command after updating (apt-get update, apt-get install) to enable openSSL for future cert
     # generation if needed.
@@ -498,9 +481,9 @@ class bash_util:
         self.logger.info("Executing custom scripts... ")
         for c in scripts:
             self.logger.info(c)
-            self.shell(c)
+            self.shell_exec(c)
 
-class LoggingContext:
+class loggingcontext:
     """
     Specialized logging class meant to capture log output as well as output from STDOUT - this is needed
     to log bash output.  Includes a streamhandler for bash output, and logs to console and file with
@@ -542,7 +525,7 @@ class LoggingContext:
         sys.stderr = sys.stdout = self.StreamLogger(logging.getLogger("main"), logging.INFO)
 
     # Return new logger with properties set for extension
-    def getLogger(self, name):
+    def get_logger(self, name):
         logger = logging.getLogger(name)
         logger.formatter = self.formatter
         logger.original_stdout = self.original_stdout
@@ -558,7 +541,7 @@ class LoggingContext:
 
         def __init__(self, name):
             logging.Logger.__init__(self, name)
-            self.logger = super(LoggingContext.InputLogger, self)
+            self.logger = super(loggingcontext.InputLogger, self)
             self.original_stdout = sys.stdout
             self.formatter = None
             self.name = name
@@ -567,7 +550,7 @@ class LoggingContext:
         def question(self, message):
             while True:
                 ans = str(self.input(message)).lower()
-                if (ans != "y" and ans != "n" and ans != ""):
+                if ans != "y" and ans != "n" and ans != "":
                     self.logger.info("Please enter (y/n)...")
                 else:
                     return False if ans == "n" else True
@@ -578,14 +561,14 @@ class LoggingContext:
         def input(self, message):
             current_stdout = sys.stdout
             sys.stdout = self.original_stdout
-            sys.stdout.write(self.getLogString(message + " ")),
+            sys.stdout.write(self.get_log_string(message + " ")),
             sys.stdout.flush()
             r = sys.stdin.readline().rstrip()
             sys.stdout = current_stdout
             return r
 
         # Creates a log string of the form log formatter, which can be printed alongside an input prompt.
-        def getLogString(self, msg):
+        def get_log_string(self, msg):
             r = logging.LogRecord(self.name, logging.INFO, "", 1, msg, None, None)
             return self.formatter.format(r)
 
@@ -608,4 +591,4 @@ class LoggingContext:
             pass
 
 
-main().run()
+Main().run()
