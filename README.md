@@ -11,13 +11,13 @@ The UST should be installed on a VM or stable server if possible - the platforms
  Platform |  Installer
 |------------ | :-------------|
 |<img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/winlogo.png" height="50" width="54"> | **Windows**: <br/> Use the msi based [windows installer](https://s3.us-east-2.amazonaws.com/adobe-ust-installer/AdobeUSTSetup.msi) for a streamlined setup process|
-| <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/ubuntulogo.png" height="25" width="25" > <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/redhatlogo.png" height="25" width="25"><br/><img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/fedora.png" height="25" width="25"> <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/centoslogo.png" height="25" width="25"> | **Linux**: <br/>Follow the [directions below](https://github.com/adobe/UST-Install-Scripts#linux-ubuntu-1204-centos-7-fedora-redhat-susesles-debian-and-macos-os-x-10) to use the bash install scripts (cross platform)
+| <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/ubuntulogo.png" height="25" width="25" > <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/redhatlogo.png" height="25" width="25"><br/><img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/fedora.png" height="25" width="25"> <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/centoslogo.png" height="25" width="25"> | **Linux**: <br/>Follow the [directions below](https://github.com/adobe/UST-Install-Scripts#linux-ubuntu-1604-centos-7-fedora-redhat) to install on any supported platform via the python install script.
 
 
 <br/>
 
 ### Configuring the User Sync Tool
-Configuration of the UST is beyond the scope of this page - please visit to links below for more information.
+Configuration of the UST is beyond the scope of this page - please visit the links below for more information.
 
  Description | Location
 |:------------ | :-------------|
@@ -36,8 +36,8 @@ The [MSI installer](https://s3.us-east-2.amazonaws.com/adobe-ust-installer/Adobe
 
 <code>((New-Object System.Net.WebClient).DownloadString('https://git.io/fhpuG')) | python</code> 
 
-### **Linux (Ubuntu 16.04+ CentOs 7+, Fedora, Redhat)**
 
+### **Linux (Ubuntu 16.04+ CentOs 7+, Fedora, Redhat)**
 
 The following will install User Sync and related packages on all of the above platforms.  Execute the command on bash shell:
 
