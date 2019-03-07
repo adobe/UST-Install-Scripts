@@ -146,8 +146,11 @@ install_configuration = {
                     'sudo yum -y install openssl'],
     },
     'win': {
-        'scripts': [],
-        'extras': {}
+        'scripts': ['mkdir C:\\pex',
+                    'setx /M PEX_ROOT "C:\\pex"'],
+        'extras': {
+            'CWD':'https://s3.us-east-2.amazonaws.com/adobe-ust-installer/UST_Windows_Extras.zip'
+        }
     },
 }
 
@@ -297,7 +300,7 @@ class Main:
 
         # Download UST and examples
         self.web.download(self.config['resources']['examples_url'], ust_dir)
-       # self.web.download(self.config['resources']['ust_url'], ust_dir)
+        self.web.download(self.config['resources']['ust_url'], ust_dir)
 
         self.logger.info("Creating configuration files... ")
         self.copy_to(os.path.join(conf_dir, "connector-ldap.yml"), ust_dir)
@@ -309,13 +312,17 @@ class Main:
         for s in self.config['shell_script']:
             self.create_shell_script(os.path.join(ust_dir, s), self.config['shell_script'][s])
 
-        # self.create_shell_script(os.path.join(ust_dir, "run-user-sync-test.sh"),
-        #                   "#!/usr/bin/env bash\n./user-sync --users mapped --process-groups -t")
-        # self.create_shell_script(os.path.join(ust_dir, "run-user-sync-live.sh"),
-        #                   "#!/usr/bin/env bash\n./user-sync --users mapped --process-groups")
-        # self.create_shell_script(os.path.join(ust_dir, "sslCertGen.sh"),
-        #                   "#!/usr/bin/env bash\nopenssl req -x509 -sha256 -nodes -days 9125 "
-        #                   "-newkey rsa:2048 -keyout private.key -out certificate_pub.crt")
+
+        # Download extras for windows: cfg app, certgen
+        if self.config['platform']['host_key'] == "win":
+            self.logger.info("Downloading windows extras... ")
+            for p in self.config['extras']:
+                path = ust_dir if p == "CWD" else os.path.join(ust_dir,p)
+                print (path)
+                os.makedirs(path, exist_ok=True)
+                self.web.download(self.config['extras'][p],path)
+
+
 
         # Set folder permissions to allow editing of .yml files
         if self.config['platform']['host_key'] != "win":
