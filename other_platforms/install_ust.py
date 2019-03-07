@@ -133,8 +133,11 @@ install_configuration = {
                             '-newkey rsa:2048 -keyout private.key -out certificate_pub.crt'
     },
     'windows_shells': {
-        'run_ust_test_mode.bat': 'cd /D "%~dp0"\npython user-sync.pex --process-groups --users mapped -t\npause',
-        'run_ust_live_mode.bat': 'cd /D "%~dp0"\npython user-sync.pex --process-groups --users mapped',
+        'Run UST Test Mode.bat': 'cd /D "%~dp0"\npython user-sync.pex --process-groups --users mapped -t\npause',
+        'Run UST Live Mode.bat': 'cd /D "%~dp0"\npython user-sync.pex --process-groups --users mapped',
+        'Notepad++ Editor.bat': 'cd /D "%~dp0"\nstart "" Utils\\Notepad++\\notepad++.exe *.yml',
+        'Configuration Wizard.bat': 'cd /D "%~dp0"\nstart "" Utils\\Adobe.UST.Configuration.App.exe',
+        'Adobe.IO CertGen.bat': 'cd /D "%~dp0"\nstart "" Utils\\Certgen\\AdobeIOCertgen.exe',
     },
     'ubuntu': {
         'scripts':['sudo apt-get update',
