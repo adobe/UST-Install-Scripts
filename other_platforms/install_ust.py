@@ -27,70 +27,86 @@ import tarfile
 import importlib
 import os
 import sys
+import binascii
 import json
-from subprocess import Popen, PIPE, STDOUT, check_output, CalledProcessError
+import zipfile
+from subprocess import Popen, PIPE, STDOUT, check_output, call
 from argparse import ArgumentParser
 
-parser = ArgumentParser()
-parser.add_argument('-d', '--debug', action='store_true')
-parser.add_argument('-fs', '--force-sudo', action='store_true')
-
-args = parser.parse_args()
-console_level = logging.DEBUG if args.debug else logging.INFO
-
-UNSUPPORTED_MESSAGE = "Unknown or unsupported platform. Windows, Ubuntu or CentOS/RedHat/Fedora" \
-                      "and Python 2.7 or 3.6 are required to use the User Sync Tool.  For more information," \
-                      "visit https://github.com/adobe-apiplatform/user-sync.py"
+UNSUPPORTED_MESSAGE = \
+    "\nUnknown or unsupported platform. Windows, Ubuntu or CentOS/RedHat/Fedora" \
+    "\nand Python 2.7 or 3.6 are required to use the User Sync Tool.  For more information," \
+    "\nvisit https://github.com/adobe-apiplatform/user-sync.py"
 
 print("\nUser Sync Tool Installation")
 print("(C) Adobe Systems Inc, 2009")
 print("https://github.com/adobe-apiplatform/user-sync.py")
 print("\nRunning pre-install checks...")
 
+parser = ArgumentParser()
+parser.add_argument('-d', '--debug', action='store_true')
+parser.add_argument('-fs', '--force-sudo', action='store_true')
+
+
+
+# Gather information from platform and command line
+args = parser.parse_args()
+console_level = logging.DEBUG if args.debug else logging.INFO
+is_windows = bool(re.search("(win)", platform.system(), re.I))
 python_version = "{0}.{1}".format(sys.version_info.major, sys.version_info.minor)
 
-if platform.win32_ver()[0] == '' and os.geteuid() != 0 and not args.force_sudo:
-    print("You must run this script as root: sudo python install_ust.py...")
-    print("if this is in error, please use --force-sudo to try anyway\n")
-    exit()
+# Check that we run as sudo and set stdin to the tty (lets us pipe the file) (bash only)
+if is_windows:
+    pip_install_cmd = 'pip install '
+    if call(["net","session"]) != 0:
+        print("You must run this script as root: please run from an elevated shell")
+        exit()
+else:
+    sys.stdin = open('/dev/tty')
+    pip_install_cmd = 'sudo pip install '
+    if os.geteuid() != 0 and not args.force_sudo:
+        print("You must run this script as root: sudo python install_ust.py...")
+        print("if this is in error, please use --force-sudo to try anyway\n")
+        exit()
 
+
+# Verify python version within limits
 if python_version != "2.7" and python_version != "3.6":
     print(UNSUPPORTED_MESSAGE)
     exit()
 
-checked_modules = ["binascii", "six", "cryptography", "pip"]
+# Check for required packages and attempt tp install them if missing
 needed_modules = []
+checked_modules = ["six", "cryptography", "pip"]
 for m in checked_modules:
     try:
         importlib.import_module(m)
     except ImportError:
         needed_modules.append(m)
 
-if "pip" in needed_modules and len(needed_modules) > 1:
+# Install pip if required
+if not is_windows and "pip" in needed_modules and len(needed_modules) > 1:
     print("Installing dependencies: pip")
-    try:
-        check_output('curl https://bootstrap.pypa.io/get-pip.py | sudo python -', shell=True)
-    except CalledProcessError:
-        check_output('curl https://bootstrap.pypa.io/get-pip.py | sudo python3 -', shell=True)
+    python_alias = 'python3' if python_version == "3.6" else 'python'
+    check_output('curl https://bootstrap.pypa.io/get-pip.py | sudo ' + python_alias + ' -', shell=True)
 
 if "pip" in needed_modules:
     needed_modules.remove("pip")
 
 for m in needed_modules:
     print("Installing required module: " + m)
-    check_output('sudo pip install ' + m, shell=True)
+    call(pip_install_cmd + m, shell=True)
 
 for m in needed_modules:
     try:
         importlib.import_module(m)
     except ImportError:
         print("Setup failed to install module: " + m + " and must stop.  "
-                                                       "Please re-run setup after installing the missing dependencies")
+                     "Please re-run setup after installing the missing dependencies")
         exit()
 
 # Remaining imports
 import six
-import binascii
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -101,21 +117,42 @@ from six.moves.urllib.request import urlretrieve, urlopen
 
 print("Finished pre-install tasks, beginning process... \n")
 
-# Platform specific scripts to be run during install
-scripts = {
-    'ubuntu': ['sudo apt-get update',
-               'sudo apt-get -y install openssl',
-               'sudo apt-get -y install libssl-dev'],
 
-    'centos': ['yum check-update',
-               'sudo yum -y install openssl'],
-    'win': []
+
+# Platform specific scripts to be run during install
+install_configuration = {
+
+    'git_config':{
+        'git_token': "4d46942c2e588fd8a87e57d52ccf17252fb7eed0",
+        'ust_repo': "https://api.github.com/repos/adobe-apiplatform/user-sync.py/releases/latest?access_token=",
+    },
+    'linux_shells': {
+        'run_ust_test_mode.sh': '#!/usr/bin/env bash\n./user-sync --users mapped --process-groups -t',
+        'run_ust_live_mode.sh': '#!/usr/bin/env bash\n./user-sync --users mapped --process-groups',
+        'ssl_cert_gen.sh':  '#!/usr/bin/env bash\nopenssl req -x509 -sha256 -nodes -days 9125 '
+                            '-newkey rsa:2048 -keyout private.key -out certificate_pub.crt'
+    },
+    'windows_shells': {
+        'run_ust_test_mode.bat': 'cd /D "%~dp0"\npython user-sync.pex --process-groups --users mapped -t\npause',
+        'run_ust_live_mode.bat': 'cd /D "%~dp0"\npython user-sync.pex --process-groups --users mapped',
+    },
+    'ubuntu': {
+        'scripts':['sudo apt-get update',
+                   'sudo apt-get -y install openssl',
+                   'sudo apt-get -y install libssl-dev'],
+    },
+    'centos': {
+        'scripts': ['yum check-update',
+                    'sudo yum -y install openssl'],
+    },
+    'win': {
+        'scripts': [],
+        'extras': {}
+    },
 }
 
 base_configuration = {
     'ustver': '2.4',
-    'git_token': "4d46942c2e588fd8a87e57d52ccf17252fb7eed0",
-    'ust_repo': "https://api.github.com/repos/adobe-apiplatform/user-sync.py/releases/latest?access_token=",
     'examplesurl': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/examples.tar.gz',
     'ubuntu': {
         '2.7': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/'
@@ -130,10 +167,8 @@ base_configuration = {
                'user-sync-v2.4-centos7-py367.tar.gz'
     },
     'win': {
-        '2.7': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/'
-               'user-sync-v2.4-win64-py2715.tar.gz',
-        '3.6': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/'
-               'user-sync-v2.4-win64-py366.tar.gz'
+        '2.7': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-win64-py2715.zip',
+        '3.6': 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-win64-py366.zip'
     },
 }
 
@@ -142,7 +177,7 @@ intro = [
     "",
     "Adobe Systems, Inc - (C) 2019",
     "=========================================================",
-    "{0} {1} - {2}",
+    "{0} {1} {2}",
     "",
     "         _   _                 ___",
     "        | | | |___ ___ _ _    / __|_  _ _ _  __",
@@ -166,14 +201,17 @@ class Main:
     def __init__(self):
 
         installpath = "adobe-user-sync-tool"
-        host = platform.linux_distribution()
+        host =  platform.win32_ver() if is_windows else platform.linux_distribution()
+
+        # Windows host doesn't have platform name, so add it
+        host_name = "Windows " + host[0] if is_windows else host[0]
 
         self.loggingcontext = \
-            Loggingcontext(console_level=console_level, descriptor="{0} {1}".format(host[0], host[1]))
+            Loggingcontext(console_level=console_level, descriptor="{0} {1}".format(host_name, host[1]))
 
         # DI
         self.web = WebUtil(self.loggingcontext)
-        self.bash = BashUtil(self.loggingcontext)
+        self.bash = ShellUtil(self.loggingcontext)
         self.ssl_gen = SslCertGenerator(self.loggingcontext, os.path.abspath(installpath))
 
         # Prep
@@ -181,15 +219,23 @@ class Main:
         self.config = {
             'platform': {},
             'resources': {}}
-        self.config['platform']['host_platform'] = host[0]
+        self.config['platform']['host_platform'] = host_name
         self.config['platform']['host_name'] = host[2]
         self.config['platform']['host_version'] = host[1]
         self.config['platform']['major_version'] = host[1][:2]
-        self.config['platform']['host_key'] = self.get_current_host(host[0])
+        self.config['platform']['host_key'] = hostkey = self.get_current_host(host_name)
 
         self.config['ust_directory'] = os.path.abspath(installpath)
-        self.config['custom_script'] = scripts[self.config['platform']['host_key']]
+        self.config['git_config'] = install_configuration['git_config']
+
+
+        self.config['custom_script'] = install_configuration[hostkey]['scripts']
         self.config['python_version'] = python_version
+        self.config['shell_script'] = install_configuration['windows_shells'] \
+            if is_windows else install_configuration['linux_shells']
+
+        if is_windows:
+            self.config['extras'] = install_configuration[hostkey]['extras']
 
         # Finish building resources by fetching the API information from GitHub
         self.web.fetch_resources(self.config)
@@ -200,6 +246,8 @@ class Main:
             return "ubuntu"
         elif bool(re.search("(cent)|(fedora)|(red)", host, re.I)):
             return "centos"
+        elif bool(re.search("(win)", host, re.I)):
+            return "win"
         else:
             self.logger.critical(UNSUPPORTED_MESSAGE)
             exit()
@@ -223,7 +271,7 @@ class Main:
         self.logger.info("")
 
     # Creates a shell script to execute specified command.  For run_ust and ssl scripts.
-    def create_shell(self, filename, command):
+    def create_shell_script(self, filename, command):
         filename = os.path.abspath(filename)
         self.logger.info("Create: " + filename)
         text_file = open(filename, "w")
@@ -249,7 +297,7 @@ class Main:
 
         # Download UST and examples
         self.web.download(self.config['resources']['examples_url'], ust_dir)
-        self.web.download(self.config['resources']['ust_url'], ust_dir)
+       # self.web.download(self.config['resources']['ust_url'], ust_dir)
 
         self.logger.info("Creating configuration files... ")
         self.copy_to(os.path.join(conf_dir, "connector-ldap.yml"), ust_dir)
@@ -257,17 +305,23 @@ class Main:
         self.copy_to(os.path.join(conf_dir, "user-sync-config.yml"), ust_dir)
 
         self.logger.info("Creating shell scripts... ")
-        self.create_shell(os.path.join(ust_dir, "run-user-sync-test.sh"),
-                          "#!/usr/bin/env bash\n./user-sync --users mapped --process-groups -t")
-        self.create_shell(os.path.join(ust_dir, "run-user-sync-live.sh"),
-                          "#!/usr/bin/env bash\n./user-sync --users mapped --process-groups")
-        self.create_shell(os.path.join(ust_dir, "sslCertGen.sh"),
-                          "#!/usr/bin/env bash\nopenssl req -x509 -sha256 -nodes -days 9125 "
-                          "-newkey rsa:2048 -keyout private.key -out certificate_pub.crt")
+
+        for s in self.config['shell_script']:
+            self.create_shell_script(os.path.join(ust_dir, s), self.config['shell_script'][s])
+
+        # self.create_shell_script(os.path.join(ust_dir, "run-user-sync-test.sh"),
+        #                   "#!/usr/bin/env bash\n./user-sync --users mapped --process-groups -t")
+        # self.create_shell_script(os.path.join(ust_dir, "run-user-sync-live.sh"),
+        #                   "#!/usr/bin/env bash\n./user-sync --users mapped --process-groups")
+        # self.create_shell_script(os.path.join(ust_dir, "sslCertGen.sh"),
+        #                   "#!/usr/bin/env bash\nopenssl req -x509 -sha256 -nodes -days 9125 "
+        #                   "-newkey rsa:2048 -keyout private.key -out certificate_pub.crt")
 
         # Set folder permissions to allow editing of .yml files
-        self.logger.info("Setting folder permissions to 777... ")
-        self.bash.shell_exec("sudo chmod 777 -R " + ust_dir)
+        if self.config['platform']['host_key'] != "win":
+            self.logger.info("Setting folder permissions to 777... ")
+            self.bash.shell_exec("sudo chmod 777 -R " + ust_dir)
+
         self.logger.info("UST installation finished... ")
 
     # Logged file copier
@@ -469,6 +523,11 @@ class WebUtil:
         if filepath.endswith(".tar.gz"):
             tarfile.open(filepath).extractall(path=outputdir)
             os.remove(filepath)
+        elif filepath.endswith(".zip"):
+            zipper = zipfile.ZipFile(filepath, 'r')
+            zipper.extractall(outputdir)
+            zipper.close()
+            os.remove(filepath)
 
     def fetch_resources(self, config):
         """
@@ -480,7 +539,7 @@ class WebUtil:
 
         pyver = config['python_version']
         hostkey = config['platform']['host_key']
-        url = base_configuration['ust_repo'] + base_configuration['git_token']
+        url = config['git_config']['ust_repo'] + config['git_config']['git_token']
         fallback = False
 
         try:
@@ -488,9 +547,9 @@ class WebUtil:
 
             for asset in data['assets']:
                 if re.search(hostkey, asset['name']) and \
-                        re.search("py" + pyver[0:1], asset['browser_download_url']):
+                        re.search("py" + pyver[0:1], asset['browser_download_url'], re.I):
                     config['resources']['ust_url'] = asset['browser_download_url']
-                elif re.search("examples.tar.gz", asset['name']):
+                elif re.search("examples.tar.gz", asset['name'], re.I):
                     config['resources']['examples_url'] = asset['browser_download_url']
                 config['resources']['ust_version'] = data['tag_name']
 
@@ -505,7 +564,7 @@ class WebUtil:
             config['resources']['ust_url'] = base_configuration[hostkey][pyver]
 
 
-class BashUtil:
+class ShellUtil:
     """
     Methods for working with the command line.  Includes shell execution, shellscript creation and
     dependency management
@@ -518,7 +577,7 @@ class BashUtil:
     def shell_exec(self, cmd):
         p = Popen(cmd.split(" "), stdout=PIPE, stdin=PIPE, stderr=STDOUT)
         for line in iter(p.stdout.readline, b''):
-            #p.stdin.write(b'y\n')
+            # p.stdin.write(b'y\n')
             self.logger.debug(line.decode().rstrip('\n'))
 
     # Uses the install command after updating (apt-get update, apt-get install) to enable openSSL for future cert
