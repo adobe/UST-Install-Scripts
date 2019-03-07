@@ -36,11 +36,12 @@ You can download the Adobe.IO UMAPI certgen tool (windows only) independently [h
 
 The following will install User Sync and related packages on all of the above platforms.  Execute the command on bash shell:
 
-<code>curl -L https://git.io/fhpuG | sudo python -</code>
+<code>curl -s -L https://git.io/fhpuG | sudo python -</code>
 
-Or, if **python** is not the correct alias on your system, please use the one you wish to run UST with.  E.g., on Ubuntu 18,
+Or, if **python** is not the correct alias on your system, you might get the error: **"curl: (23) Failed writing body"**<br/>
+Please use the python alias corresponding to the version you wish to run UST with.  E.g., on Ubuntu 18:
 
-<code>curl -L https://git.io/fhpuG | sudo **python3** -</code>
+<code>curl -s -L https://git.io/fhpuG | sudo **python3** -</code>
 
 ### Prerequisites
 
