@@ -26,16 +26,13 @@ Configuration of the UST is beyond the scope of this page - please visit to link
 |Setup and Success Guide | https://adobe-apiplatform.github.io/user-sync.py/en/success-guide/<br/>
 |UST Setup Walkthrough | https://helpx.adobe.com/enterprise/using/user-sync.html
 
-You can download the Adobe.IO UMAPI certgen tool (windows only) independently [here](https://s3.us-east-2.amazonaws.com/adobe-ust-installer/AdobeIOCertgen.zip) - this is also included as part of the install.
-
+You can also download the Adobe.IO UMAPI certgen tool (windows only) independently [here](https://s3.us-east-2.amazonaws.com/adobe-ust-installer/AdobeIOCertgen.zip) if you only need to update your cert/keypair.  This is included as a part of the full installation as well.
 
 <br/>
 
 ### **Windows (alternative installation)**
 
-The [MSI installer](https://s3.us-east-2.amazonaws.com/adobe-ust-installer/AdobeUSTSetup.msi) provides the best experience and can handle python installation automatically.  However, you may<br/>
-also run the python installer script on Windows for a streamlined setup.  Note: you must already have python 2.7 or 3.6 installed<br/>
-and on your path.  From an administrator level powershell, execute the following string:
+The [MSI installer](https://s3.us-east-2.amazonaws.com/adobe-ust-installer/AdobeUSTSetup.msi) provides the best experience and can handle python installation automatically.  However, you may also run the python installer script on Windows for a streamlined setup.  Note: you must already have python 2.7 or 3.6 installed and on your path.  From an administrator level powershell, execute the following string:
 
 <code>((New-Object System.Net.WebClient).DownloadString('https://git.io/fhpuG')) | python</code> 
 
