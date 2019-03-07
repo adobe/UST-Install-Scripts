@@ -47,8 +47,6 @@ parser = ArgumentParser()
 parser.add_argument('-d', '--debug', action='store_true')
 parser.add_argument('-fs', '--force-sudo', action='store_true')
 
-
-
 # Gather information from platform and command line
 args = parser.parse_args()
 console_level = logging.DEBUG if args.debug else logging.INFO
@@ -58,7 +56,7 @@ python_version = "{0}.{1}".format(sys.version_info.major, sys.version_info.minor
 # Check that we run as sudo and set stdin to the tty (lets us pipe the file) (bash only)
 if is_windows:
     pip_install_cmd = 'pip install '
-    if call(["net","session"]) != 0:
+    if call(["net", "session"]) != 0:
         print("You must run this script as root: please run from an elevated shell")
         exit()
 else:
@@ -68,7 +66,6 @@ else:
         print("You must run this script as root: sudo python install_ust.py...")
         print("if this is in error, please use --force-sudo to try anyway\n")
         exit()
-
 
 # Verify python version within limits
 if python_version != "2.7" and python_version != "3.6":
@@ -102,7 +99,7 @@ for m in needed_modules:
         importlib.import_module(m)
     except ImportError:
         print("Setup failed to install module: " + m + " and must stop.  "
-                     "Please re-run setup after installing the missing dependencies")
+                                                       "Please re-run setup after installing the missing dependencies")
         exit()
 
 # Remaining imports
@@ -117,20 +114,18 @@ from six.moves.urllib.request import urlretrieve, urlopen
 
 print("Finished pre-install tasks, beginning process... \n")
 
-
-
 # Platform specific scripts to be run during install
 install_configuration = {
 
-    'git_config':{
+    'git_config': {
         'git_token': "4d46942c2e588fd8a87e57d52ccf17252fb7eed0",
         'ust_repo': "https://api.github.com/repos/adobe-apiplatform/user-sync.py/releases/latest?access_token=",
     },
     'linux_shells': {
         'run_ust_test_mode.sh': '#!/usr/bin/env bash\n./user-sync --users mapped --process-groups -t',
         'run_ust_live_mode.sh': '#!/usr/bin/env bash\n./user-sync --users mapped --process-groups',
-        'ssl_cert_gen.sh':  '#!/usr/bin/env bash\nopenssl req -x509 -sha256 -nodes -days 9125 '
-                            '-newkey rsa:2048 -keyout private.key -out certificate_pub.crt'
+        'ssl_cert_gen.sh': '#!/usr/bin/env bash\nopenssl req -x509 -sha256 -nodes -days 9125 '
+                           '-newkey rsa:2048 -keyout private.key -out certificate_pub.crt'
     },
     'windows_shells': {
         'Run UST Test Mode.bat': 'cd /D "%~dp0"\npython user-sync.pex --process-groups --users mapped -t\npause',
@@ -140,9 +135,9 @@ install_configuration = {
         'Adobe.IO CertGen.bat': 'cd /D "%~dp0"\nstart "" Utils\\Certgen\\AdobeIOCertgen.exe',
     },
     'ubuntu': {
-        'scripts':['sudo apt-get update',
-                   'sudo apt-get -y install openssl',
-                   'sudo apt-get -y install libssl-dev'],
+        'scripts': ['sudo apt-get update',
+                    'sudo apt-get -y install openssl',
+                    'sudo apt-get -y install libssl-dev'],
     },
     'centos': {
         'scripts': ['yum check-update',
@@ -152,7 +147,7 @@ install_configuration = {
         'scripts': ['mkdir C:\\pex',
                     'setx /M PEX_ROOT "C:\\pex"'],
         'extras': {
-            'CWD':'https://s3.us-east-2.amazonaws.com/adobe-ust-installer/UST_Windows_Extras.zip'
+            'CWD': 'https://s3.us-east-2.amazonaws.com/adobe-ust-installer/UST_Windows_Extras.zip'
         }
     },
 }
@@ -207,7 +202,7 @@ class Main:
     def __init__(self):
 
         installpath = "adobe-user-sync-tool"
-        host =  platform.win32_ver() if is_windows else platform.linux_distribution()
+        host = platform.win32_ver() if is_windows else platform.linux_distribution()
 
         # Windows host doesn't have platform name, so add it
         host_name = "Windows " + host[0] if is_windows else host[0]
@@ -233,7 +228,6 @@ class Main:
 
         self.config['ust_directory'] = os.path.abspath(installpath)
         self.config['git_config'] = install_configuration['git_config']
-
 
         self.config['custom_script'] = install_configuration[hostkey]['scripts']
         self.config['python_version'] = python_version
@@ -315,17 +309,14 @@ class Main:
         for s in self.config['shell_script']:
             self.create_shell_script(os.path.join(ust_dir, s), self.config['shell_script'][s])
 
-
         # Download extras for windows: cfg app, certgen
         if self.config['platform']['host_key'] == "win":
             self.logger.info("Downloading windows extras... ")
             for p in self.config['extras']:
-                path = ust_dir if p == "CWD" else os.path.join(ust_dir,p)
+                path = ust_dir if p == "CWD" else os.path.join(ust_dir, p)
                 print (path)
                 os.makedirs(path, exist_ok=True)
-                self.web.download(self.config['extras'][p],path)
-
-
+                self.web.download(self.config['extras'][p], path)
 
         # Set folder permissions to allow editing of .yml files
         if self.config['platform']['host_key'] != "win":
