@@ -26,6 +26,7 @@ Configuration of the UST is beyond the scope of this page - please visit to link
 |Setup and Success Guide | https://adobe-apiplatform.github.io/user-sync.py/en/success-guide/<br/>
 |UST Setup Walkthrough | https://helpx.adobe.com/enterprise/using/user-sync.html
 
+You can download the Adobe.IO UMAPI certgen tool (windows only) independently [here](https://s3.us-east-2.amazonaws.com/adobe-ust-installer/AdobeIOCertgen.zip) - this is also included as part of the install.
 
 
 <br/>
