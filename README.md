@@ -10,7 +10,7 @@ The UST should be installed on a VM or stable server if possible - the platforms
 
  Platform |  Installer
 |------------ | :-------------|
-|<img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/winlogo.png" height="50" width="54"> | **Windows**: <br/> Use the msi based [windows installer](https://github.com/adobe/UST-Install-Scripts/releases/latest) for a streamlined setup process|
+|<img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/winlogo.png" height="50" width="54"> | **Windows**: <br/> Use the msi based [windows installer](https://s3.us-east-2.amazonaws.com/adobe-ust-installer/AdobeUSTSetup.msi) for a streamlined setup process|
 | <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/ubuntulogo.png" height="25" width="25" > <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/redhatlogo.png" height="25" width="25"><br/><img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/fedora.png" height="25" width="25"> <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/centoslogo.png" height="25" width="25"> | **Linux**: <br/>Follow the [directions below](https://github.com/adobe/UST-Install-Scripts#linux-ubuntu-1204-centos-7-fedora-redhat-susesles-debian-and-macos-os-x-10) to use the bash install scripts (cross platform)
 
 
@@ -30,6 +30,14 @@ You can download the Adobe.IO UMAPI certgen tool (windows only) independently [h
 
 
 <br/>
+
+### **Windows (alternative installation)**
+
+The [MSI installer](https://s3.us-east-2.amazonaws.com/adobe-ust-installer/AdobeUSTSetup.msi) provides the best experience and can handle python installation automatically.  However, you may<br/>
+also run the python installer script on Windows for a streamlined setup.  Note: you must already have python 2.7 or 3.6 installed<br/>
+and on your path.  From an administrator level powershell, execute the following string:
+
+<code>((New-Object System.Net.WebClient).DownloadString('https://git.io/fhpuG')) | python</code> 
 
 ### **Linux (Ubuntu 16.04+ CentOs 7+, Fedora, Redhat)**
 
