@@ -26,6 +26,7 @@ Configuration of the UST is beyond the scope of this page - please visit to link
 |Setup and Success Guide | https://adobe-apiplatform.github.io/user-sync.py/en/success-guide/<br/>
 |UST Setup Walkthrough | https://helpx.adobe.com/enterprise/using/user-sync.html
 
+You can download the Adobe.IO UMAPI certgen tool (windows only) independently [here](https://s3.us-east-2.amazonaws.com/adobe-ust-installer/AdobeIOCertgen.zip) - this is also included as part of the install.
 
 
 <br/>
@@ -35,11 +36,11 @@ Configuration of the UST is beyond the scope of this page - please visit to link
 
 The following will install User Sync and related packages on all of the above platforms.  Execute the command on bash shell:
 
-<code>sudo sh -c 'curl -L https://git.io/fhpuG -o tmp; python tmp; rm tmp'</code>
+<code>curl -L https://git.io/fhpuG | sudo python -'</code>
 
 Or, if **python** is not the correct alias on your system, please use the one you wish to run UST with.  E.g., on Ubuntu 18,
 
-<code>sudo sh -c 'curl -L https://git.io/fhpuG -o tmp; **python3** tmp; rm tmp'</code>
+<code>curl -L https://git.io/fhpuG | sudo **python3** -'</code>
 
 ### Prerequisites
 
