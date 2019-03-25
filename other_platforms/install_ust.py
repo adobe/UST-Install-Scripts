@@ -584,6 +584,7 @@ class ShellUtil:
                 self.logger.debug(line.rstrip('\n'))
             except TypeError:
                 self.logger.debug(line.decode().rstrip('\n'))
+                
     # Uses the install command after updating (apt-get update, apt-get install) to enable openSSL for future cert
     # generation if needed.
     def custom_script(self, scripts):
