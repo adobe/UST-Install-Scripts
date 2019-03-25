@@ -580,9 +580,10 @@ class ShellUtil:
     def shell_exec(self, cmd):
         p = Popen(cmd.split(" "), stdout=PIPE, stdin=PIPE, stderr=STDOUT)
         for line in iter(p.stdout.readline, b''):
-            # p.stdin.write(b'y\n')
-            self.logger.debug(line.decode().rstrip('\n'))
-
+            try:
+                self.logger.debug(line.rstrip('\n'))
+            except TypeError:
+                self.logger.debug(line.decode().rstrip('\n'))
     # Uses the install command after updating (apt-get update, apt-get install) to enable openSSL for future cert
     # generation if needed.
     def custom_script(self, scripts):
