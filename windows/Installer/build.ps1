@@ -59,6 +59,8 @@ $current_cfg = @{
     }			
 }	
 
+$global:final_cfg = @{}
+
 function Log($msg, $color){
     $color = if ($color) {$color} else {"white"} 
     Write-Host  "Logger ::: $msg" -ForegroundColor $color 
@@ -208,8 +210,8 @@ function PreBuild(){
     Log "Beginning prebuild..... " "green"
 
     CreateFolders
-    $current_cfg = if ($fetch) {Fetch} else {$current_cfg}
-    GetResources ($current_cfg)
+    $global:final_cfg = if ($fetch) {Fetch} else {$current_cfg}
+    GetResources ($global:final_cfg)
     CopyFiles
 
     Log "PreBuild tasks complete..... " "green"
@@ -248,7 +250,7 @@ function BuildMSI(){
 
     Log "Starting build process..... " "green"
 
-    $ustver = ${current_cfg}['USTVersion']
+    $ustver = ${global:final_cfg}['USTVersion']
     MSBuild.exe .\ust-wix.sln /p:Configuration=Release /p:Platform="x64" -t:Clean
     MSBuild.exe .\ust-wix.sln /p:Configuration=Release /p:DefineConstants="""RequiredSourceDir=files\PreMapped;UstVer=$ustver""" /p:Platform="x64" -t:Build
   
