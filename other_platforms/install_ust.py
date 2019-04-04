@@ -122,8 +122,10 @@ install_configuration = {
         'ust_repo': "https://api.github.com/repos/adobe-apiplatform/user-sync.py/releases/latest?access_token=",
     },
     'linux_shells': {
-        'run_ust_test_mode.sh': '#!/usr/bin/env bash\n./user-sync --users mapped --process-groups -t',
-        'run_ust_live_mode.sh': '#!/usr/bin/env bash\n./user-sync --users mapped --process-groups',
+        'run_ust_test_mode.sh': '#!/usr/bin/env bash\ncd "$(dirname "$(realpath "$0")")";\n'
+                                './user-sync --users mapped --process-groups -t',
+        'run_ust_live_mode.sh': '#!/usr/bin/env bash\ncd "$(dirname "$(realpath "$0")")";\n'
+                                './user-sync --users mapped --process-groups',
         'ssl_cert_gen.sh': '#!/usr/bin/env bash\nopenssl req -x509 -sha256 -nodes -days 9125 '
                            '-newkey rsa:2048 -keyout private.key -out certificate_pub.crt'
     },
@@ -578,9 +580,11 @@ class ShellUtil:
     def shell_exec(self, cmd):
         p = Popen(cmd.split(" "), stdout=PIPE, stdin=PIPE, stderr=STDOUT)
         for line in iter(p.stdout.readline, b''):
-            # p.stdin.write(b'y\n')
-            self.logger.debug(line.decode().rstrip('\n'))
-
+            try:
+                self.logger.debug(line.rstrip('\n'))
+            except TypeError:
+                self.logger.debug(line.decode().rstrip('\n'))
+                
     # Uses the install command after updating (apt-get update, apt-get install) to enable openSSL for future cert
     # generation if needed.
     def custom_script(self, scripts):
