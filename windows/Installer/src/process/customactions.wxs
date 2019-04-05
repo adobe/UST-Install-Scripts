@@ -72,6 +72,14 @@
                   BinaryKey="USTCustomActions.CA.dll"
                   DllEntry="InstallPython27Offline">
     </CustomAction>
+
+    <CustomAction Id="SetLongPaths"
+              Impersonate="no"
+              Return="check"
+              Execute="deferred"
+              BinaryKey="USTCustomActions.CA.dll"
+              DllEntry="SetLongPaths">
+    </CustomAction>
     
   </Fragment>
   

@@ -38,6 +38,8 @@
       <RemoveRegistryValues Suppress="yes" />
       <UnpublishFeatures Suppress="yes" />
 
+      <Custom Action='SetLongPaths' Before ='InstallFinalize'></Custom>
+
     </InstallExecuteSequence>
 
 

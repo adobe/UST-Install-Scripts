@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace USTCustomActions
 {
-    public static class RegChecker
+    public static class RegistryUtil
     {
 
         public static List<String> CheckKey(RegistryKey key)
@@ -29,6 +29,15 @@ namespace USTCustomActions
             key.Close();
             return versions;        
             
+        }
+
+        public static void SetLongPathKey()
+        {
+
+            RegistryKey pathKey = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\FileSystem", true);
+            pathKey.SetValue("LongPathsEnabled", "1", RegistryValueKind.DWord);
+            pathKey.Close();
+
         }
 
         public static void CheckPythonInstalled(Session session)

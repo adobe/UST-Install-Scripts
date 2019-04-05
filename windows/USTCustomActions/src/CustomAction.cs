@@ -11,7 +11,7 @@ namespace USTCustomActions
         [CustomAction]
         public static ActionResult CheckPythonVersion(Session session)
         {
-            RegChecker.CheckPythonInstalled(session);
+            RegistryUtil.CheckPythonInstalled(session);
             return ActionResult.Success;
         }
 
@@ -46,7 +46,7 @@ namespace USTCustomActions
 
         [CustomAction]
         public static ActionResult InstallVcRedist(Session session)
-        {
+        {       
             FileManager.InstallPackage(session, "vcredist_x64.exe", "/q");
             return ActionResult.Success;
         }
@@ -72,5 +72,11 @@ namespace USTCustomActions
             return ActionResult.Success;
         }
 
+        [CustomAction]
+        public static ActionResult SetLongPaths(Session session)
+        {
+            RegistryUtil.SetLongPathKey();
+            return ActionResult.Success;
+        }
     }
 }
