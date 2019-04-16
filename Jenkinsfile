@@ -37,7 +37,7 @@ pipeline {
 					dir("windows") {
 						withAWS(credentials:'aws-upload', region:'us-east-2') {
 							s3Upload(file:"$cert_file", bucket:"adobe-ust-installer", path:"$cert_name", acl:"PublicRead")
-							s3Upload(file:"$msi_file", bucket:"adobe-ust-installer", path:"AdobeUSTSetup.msi", acl:"PublicRead")
+							s3Upload(file:"$msi_file", bucket:"adobe-ust-installer", path:"$msi_name", acl:"PublicRead")
 						}	
 						env.msg = MESSAGE
 						sh 'powershell -File Installer/push_release.ps1 -filepaths "$msi_file","$cert_file" -message "$msg"'
