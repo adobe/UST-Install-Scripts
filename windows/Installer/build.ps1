@@ -141,6 +141,9 @@ function GetResources ($cfg) {
     GetResource $cfg.ExamplesLink ($options['root'] + "\PreMapped")
     GetResource $cfg.VcRedistLink ($options['root'] + "\Managed")
 
+    ### Temporary fix ###
+    Remove-Item ($options['root'] + "\PreMapped\user_sync") -Force -Recurse -ErrorAction SilentlyContinue
+
     foreach ($r in $cfg.Binaries.Keys){    
     $pyFileName = "Python" + $r.SubString(0,1)  + $cfg.Binaries[$r].PythonLink.Substring($cfg.Binaries[$r].PythonLink.LastIndexOf("."))
        GetResource $cfg.Binaries[$r].PythonLink ($options['root'] + "\Managed") $pyFileName
