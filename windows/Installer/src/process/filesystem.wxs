@@ -40,11 +40,11 @@
       </Component>
     </DirectoryRef>
 
-    <DirectoryRef Id="TARGETDIR">
+    <!--<DirectoryRef Id="TARGETDIR">
       <Component Id="RemoveExisting" Guid="{EED5A8F7-A9EF-414F-BD14-A5557A29CD62}">
         <util:RemoveFolderEx On="install" Property="INSTALLDIR" />
       </Component>
-    </DirectoryRef>
+    </DirectoryRef>-->
 
     <DirectoryRef Id="INSTALLDIR">
       <Component Id="AddShortcuts" Guid="{6EDE3070-F3FB-4FAC-9615-8CB40536E9A0}">

@@ -48,7 +48,7 @@
       <ComponentRef Id="Permissions"/>
       <ComponentRef Id="SetPexRoot" />
       <ComponentRef Id="PexFolder" />
-      <ComponentRef Id="RemoveExisting" />
+      <!--<ComponentRef Id="RemoveExisting" />-->
       <ComponentRef Id="AddShortcuts" />
       <ComponentRef Id="UST27"/>
       <ComponentRef Id="UST36"/>
