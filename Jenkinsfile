@@ -1,3 +1,4 @@
+import java.time.LocalDateTime
 pipeline {
 	agent any
 	environment {
@@ -34,7 +35,6 @@ pipeline {
 			when {expression { env.DO_RELEASE == 'true' }}
 			steps {
 				script{
-					import java.time.LocalDateTime
 					String currentTime = LocalDateTime.now().toString()     
 					dir("windows") {
 						withAWS(credentials:'aws-upload', region:'us-east-2') {
@@ -50,5 +50,6 @@ pipeline {
 	}
 
 	post { always { deleteDir()}}
+}}
 }
 
