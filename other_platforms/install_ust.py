@@ -450,7 +450,7 @@ class SslCertGenerator:
             .public_key(key.public_key()) \
             .serial_number(12345) \
             .not_valid_before(datetime.datetime.utcnow()) \
-            .not_valid_after(datetime.datetime.utcnow() + datetime.timedelta(days=10)) \
+            .not_valid_after(datetime.datetime.utcnow() + datetime.timedelta(days=3650)) \
             .sign(key, hashes.SHA256(), default_backend())
 
     # Generate a random RSA 2048 key
