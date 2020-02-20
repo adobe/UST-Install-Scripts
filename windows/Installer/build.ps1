@@ -45,17 +45,17 @@ $options = @{
 
 
 $current_cfg = @{
-    'USTVersion' = 'v2.4'
+    'USTVersion' = 'v2.5'
     'GUILink' = 'https://github.com/adobe/ust-configapp/releases/download/v1.0.3/Adobe.UST.Configuration.App.exe'
     'GUIVersion' = 'v1.0.3'
-    'ExamplesLink' = 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/examples.zip'
-    'NotepadLink' = 'https://notepad-plus-plus.org/repository/7.x/7.6.1/npp.7.6.1.bin.minimalist.7z'
-    'VcRedistLink' = 'https://download.microsoft.com/download/9/1/4/914851c6-9141-443b-bdb4-8bad3a57bea9/vcredist_x64.exe'
+    'ExamplesLink' = 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.5/examples.zip'
+    'NotepadLink' = 'https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v7.8.4/npp.7.8.4.bin.minimalist.x64.7z'
+    'VcRedistLink' = 'https://go.microsoft.com/fwlink/?LinkId=746572'
     'Binaries' = @{
         '2.7' = @{'PythonLink' = $options['python_urls']['2.7']
-                'USTLink' = 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-win64-py2715.zip'}
+                'USTLink' = 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.5/user-sync-v2.5-win64-py2716.zip'}
         '3.6' = @{'PythonLink' = $options['python_urls']['3.6']
-                'USTLink' = 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.4/user-sync-v2.4-win64-py366.zip'}
+                'USTLink' = 'https://github.com/adobe-apiplatform/user-sync.py/releases/download/v2.5/user-sync-v2.5-win64-py368.zip'}
     }			
 }	
 
@@ -91,8 +91,9 @@ function GetResource($fileURL, $outputFolder, $fileName){
     $filename = if ($filename) {$filename} else {$fileURL.split("/")[-1]}
     $filepath = "$outputFolder\$filename"    
 
-    Log "Downloading $fileURL"
-    (New-Object Net.Webclient).DownloadFile($fileURL, "$filepath")
+    Log "Downloading $fileURL to $filepath" 
+
+    (New-Object Net.Webclient).DownloadFile("$fileURL", "$filepath")
 
     if (($fileURL.EndsWith("zip") -or $fileURL.EndsWith("tar.gz") -or $fileURL.EndsWith("7z"))) {         
         ExpandArchive $filepath $outputFolder
@@ -139,7 +140,7 @@ function GetResources ($cfg) {
     GetResource $cfg.GUILink ($options['root'] + "\PreMapped\Utils")
     GetResource $cfg.NotepadLink ($options['root'] + "\PreMapped\Utils\Notepad++")
     GetResource $cfg.ExamplesLink ($options['root'] + "\PreMapped")
-    GetResource $cfg.VcRedistLink ($options['root'] + "\Managed")
+    GetResource $cfg.VcRedistLink ($options['root'] + "\Managed") "vcredist_x64.exe"
 
     ### Temporary fix ###
     Remove-Item ($options['root'] + "\PreMapped\user_sync") -Force -Recurse -ErrorAction SilentlyContinue
