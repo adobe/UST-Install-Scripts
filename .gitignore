@@ -1,8 +1,10 @@
 
 dist/
+.idea/
+.vs/
+.vscode/
 
-*.pem
-*.crt
-*.key
+*.log
 
 AdobeUSTSetup*
+
