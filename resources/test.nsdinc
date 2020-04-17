@@ -5,14 +5,6 @@
 ; Do not edit it manually, use NSISDialogDesigner instead!
 ; =========================================================
 
-; GetDlgItem $0 $HWNDPARENT 3 ; Back Button
-; GetDlgItem $1 $HWNDPARENT 1 ; Next/Close Button
-; GetDlgItem $2 $HWNDPARENT 2 ; Cancel Button
-
-!include "MUI2.nsh"
-!include LogicLib.nsh
-
-; handle variables
 ; handle variables
 Var hCtl_custom_z
 Var hCtl_custom_z_Label2
@@ -23,8 +15,6 @@ Var hCtl_custom_z_CertgenChk
 Var hCtl_custom_z_Bitmap1
 Var hCtl_custom_z_Bitmap1_hImage
 Var hCtl_custom_z_Font1
-Var hCtl_custom_z_Bitmap2
-Var hCtl_custom_z_Bitmap2_hImage
 
 
 ; dialog create function
@@ -69,65 +59,16 @@ Function fnc_custom_z_Create
   SetCtlColors $hCtl_custom_z_CertgenChk 0x000000 0xFFFFFF
   
   ; === Bitmap1 (type: Bitmap) ===
-  ${NSD_CreateBitmap} 0u 0u 109u 193u ""
+  ${NSD_CreateBitmap} 0u 0u 287u 193u ""
   Pop $hCtl_custom_z_Bitmap1
   SetCtlColors $hCtl_custom_z_Bitmap1 0x000000 0xFFFFFF
-  File "/oname=$PLUGINSDIR\dlgbmp-adobe-thin.bmp" "resources\images\dlgbmp-adobe-thin.bmp"
-  ${NSD_SetStretchedImage} $hCtl_custom_z_Bitmap1 "$PLUGINSDIR\dlgbmp-adobe-thin.bmp" $hCtl_custom_z_Bitmap1_hImage
+  File "/oname=$PLUGINSDIR\red_door.bmp" "G:\Repositories\Resources\images\remix_wallpaper\out\red_door.bmp"
+  ${NSD_SetStretchedImage} $hCtl_custom_z_Bitmap1 "$PLUGINSDIR\red_door.bmp" $hCtl_custom_z_Bitmap1_hImage
   
-
-  ${NSD_SetState} $hCtl_custom_z_CertgenChk 1
-  ${NSD_SetState} $hCtl_custom_z_FolderChk 1
-
-;  Set text on Next button
-  GetDlgItem $R0 $HWNDPARENT 1
-  SendMessage $R0 ${WM_SETTEXT} 0 `STR:Finish`
-
-  GetDlgItem $R0 $HWNDPARENT 3
-  ShowWindow $R0 ${SW_HIDE}
-
-  GetDlgItem $1 $HWNDPARENT 2 
-  EnableWindow $1 2 
 FunctionEnd
 
-
-
+; dialog show function
 Function fnc_custom_z_Show
   Call fnc_custom_z_Create
-  nsDialogs::Show  
-  ${NSD_CreateBitmap} 0u 0u 309u 193u ""
-  Pop $hCtl_custom_z_Bitmap2
-  SetCtlColors $hCtl_custom_z_Bitmap2 0x000000 0xFFFFFF
-  File "/oname=$PLUGINSDIR\dlgbmp-adobe-thin.bmp" "G:\Repositories\Resources\images\remix_wallpaper\out\red_door.bmp"
-  ${NSD_SetStretchedImage} $hCtl_custom_z_Bitmap2 "$PLUGINSDIR\dlgbmp-adobe-thin.bmp" $hCtl_custom_z_Bitmap2_hImage
-FunctionEnd
-
-Function run_certgen
-	${NSD_GetState} $hCtl_custom_z_CertgenChk $1
-	${If} $1 == 1
-		ExecShell "" "Utils\Certgen\AdobeIOCertgen.exe"
-	${EndIf}
-FunctionEnd
-
-Function run_folder
-	${NSD_GetState} $hCtl_custom_z_FolderChk $1
-	${If} $1 == 1
-		ExecShell "open" ""
-	${EndIf}
-FunctionEnd
-
-Function run_wiz
-	${NSD_GetState} $hCtl_custom_z_WizardChk $1
-	${If} $1 == 1
-		ExecShell "" "Utils\Adobe.UST.Configuration.App.exe"
-	${EndIf}
-FunctionEnd
-
-Function fnc_custom_z_Leave
-  Call run_certgen
-  Call run_folder
-  Call run_wiz
-
-
-Quit
+  nsDialogs::Show
 FunctionEnd

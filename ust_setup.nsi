@@ -22,9 +22,9 @@ OutFile "${Path_Out}\AdobeUSTSetup.exe"
 
 ;--------------------------------
 ;'Pages
-
+Page custom fnc_custom_z_Show fnc_custom_z_Leave
 !insertmacro MUI_PAGE_WELCOME
-!insertmacro MUI_PAGE_LICENSE "files\license.rtf"
+!insertmacro MUI_PAGE_LICENSE LICENSE
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 Page custom fnc_custom_z_Show fnc_custom_z_Leave
