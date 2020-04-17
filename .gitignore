@@ -1,17 +1,8 @@
-output/
-.vs/
-bin/
-obj/
-.vscode/
 
-required_resources.wxs
-USTCustomActions.CA.dll
+dist/
 
-files/
-*log
-venv/
-.idea/
-other_platforms/adobe-user-sync-tool/*
 *.pem
 *.crt
 *.key
+
+AdobeUSTSetup*
