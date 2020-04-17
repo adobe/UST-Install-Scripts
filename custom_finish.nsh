@@ -23,8 +23,6 @@ Var hCtl_custom_z_CertgenChk
 Var hCtl_custom_z_Bitmap1
 Var hCtl_custom_z_Bitmap1_hImage
 Var hCtl_custom_z_Font1
-Var hCtl_custom_z_Bitmap2
-Var hCtl_custom_z_Bitmap2_hImage
 
 
 ; dialog create function
@@ -72,8 +70,8 @@ Function fnc_custom_z_Create
   ${NSD_CreateBitmap} 0u 0u 109u 193u ""
   Pop $hCtl_custom_z_Bitmap1
   SetCtlColors $hCtl_custom_z_Bitmap1 0x000000 0xFFFFFF
-  File "/oname=$PLUGINSDIR\dlgbmp-adobe-thin.bmp" "resources\images\dlgbmp-adobe-thin.bmp"
-  ${NSD_SetStretchedImage} $hCtl_custom_z_Bitmap1 "$PLUGINSDIR\dlgbmp-adobe-thin.bmp" $hCtl_custom_z_Bitmap1_hImage
+  File "/oname=$PLUGINSDIR\splash.bmp" ${splash}
+  ${NSD_SetStretchedImage} $hCtl_custom_z_Bitmap1 "$PLUGINSDIR\splash.bmp" $hCtl_custom_z_Bitmap1_hImage
   
 
   ${NSD_SetState} $hCtl_custom_z_CertgenChk 1
@@ -88,18 +86,21 @@ Function fnc_custom_z_Create
 
   GetDlgItem $1 $HWNDPARENT 2 
   EnableWindow $1 2 
+
 FunctionEnd
 
 
 
 Function fnc_custom_z_Show
   Call fnc_custom_z_Create
+  GetDlgItem $0 $HWNDPARENT 1028
+  GetDlgItem $1 $HWNDPARENT 1256
+
+# Hide branding
+  ShowWindow $0 ${SW_HIDE}
+  ShowWindow $1 ${SW_HIDE}
+
   nsDialogs::Show  
-  ${NSD_CreateBitmap} 0u 0u 309u 193u ""
-  Pop $hCtl_custom_z_Bitmap2
-  SetCtlColors $hCtl_custom_z_Bitmap2 0x000000 0xFFFFFF
-  File "/oname=$PLUGINSDIR\dlgbmp-adobe-thin.bmp" "G:\Repositories\Resources\images\remix_wallpaper\out\red_door.bmp"
-  ${NSD_SetStretchedImage} $hCtl_custom_z_Bitmap2 "$PLUGINSDIR\dlgbmp-adobe-thin.bmp" $hCtl_custom_z_Bitmap2_hImage
 FunctionEnd
 
 Function run_certgen

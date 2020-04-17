@@ -6,23 +6,26 @@
 RequestExecutionLevel admin
 Unicode True
 
+!define splash "resources\images\logo_6.bmp"
+!define /file VERSION "version.txt"
+!define PATH_OUT "bin"
+!system 'md "${PATH_OUT}"'
+
 !include "MUI2.nsh"
 !include "custom_finish.nsh"
 
-!define /file VERSION "version.txt"
 Name "Adobe User Sync Tool ${VERSION}"
-InstallDir "$PROGRAMFILES64\Adobe\Adobe User Sync ToolZZ"  
+OutFile "${Path_Out}\AdobeUSTSetup.exe"
+InstallDir "$PROGRAMFILES64\Adobe\Adobe User Sync Tool"  
+BrandingText "User Sync ${VERSION}"
+
 
 !define MUI_ICON "resources\images\adobe-logo.ico"
-!define MUI_WELCOMEFINISHPAGE_BITMAP "resources\images\dlgbmp-adobe-thin.bmp"
+!define MUI_WELCOMEFINISHPAGE_BITMAP ${splash}
 !define MUI_UI "resources\modern_custom.exe"
-!define PATH_OUT "bin"
-!system 'md "${PATH_OUT}"'
-OutFile "${Path_Out}\AdobeUSTSetup.exe"
 
 ;--------------------------------
 ;'Pages
-Page custom fnc_custom_z_Show fnc_custom_z_Leave
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE LICENSE
 !insertmacro MUI_PAGE_DIRECTORY
