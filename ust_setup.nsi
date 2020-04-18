@@ -2,7 +2,6 @@
 ;--------------------------------
 ;Include Modern UI
 
-
 RequestExecutionLevel admin
 Unicode True
 
@@ -64,6 +63,9 @@ Section "Install"
     "" "$INSTDIR\Utils\Certgen\AdobeIOCertgen.exe" 0 SW_SHOWNORMAL \
     ALT|CONTROL|SHIFT|F5 "Create a new cert/keypair"
 
-SectionEnd 
+    AccessControl::GrantOnFile \
+        "$INSTDIR\" "(S-1-1-0)" "GenericRead + GenericWrite + GenericExecute + Delete"
+    Pop $0
 
+SectionEnd 
 !insertmacro MUI_LANGUAGE "English"
