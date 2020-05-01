@@ -30,7 +30,7 @@ prepare:
 	
 release_un:
 	make build
-	cp "${unsigned_dir}\AdobeUSTSetup.exe" "${dist_dir}\AdobeUSTSetup-Beta-${version}.exe"
+	cp "${unsigned_dir}\AdobeUSTSetup.exe" "${dist_dir}\AdobeUST_${version}.exe"
 
 release:
 	make build

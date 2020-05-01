@@ -32,8 +32,16 @@ You can also download the Adobe.IO UMAPI certgen tool (windows only) independent
 
 ### **Linux (Ubuntu 16.04+ CentOs 7+, Fedora, Redhat)**
 
-TBA
+Self install function coming soon.  For now, download the executable from https://github.com/adobe-apiplatform/user-sync.py/releases, and run:
 
+`./user-sync example-config`
 
+This will create the basic configuration files.  You can generate the umapi cert/keypair by running:
+
+`./user-sync certgen`
+
+User sync can then be run simply on the command line or a shell script.  For example:
+
+`./user-sync --users mapped --process-groups -t`
 <hr/>
 
