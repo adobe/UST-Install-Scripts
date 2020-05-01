@@ -10,7 +10,7 @@ The UST should be installed on a VM or stable server if possible - the platforms
 
  Platform |  Installer
 |------------ | :-------------|
-|<img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/winlogo.png" height="50" width="54"> | **Windows**: <br/> Use the msi based [windows installer](https://github.com/adobe/UST-Install-Scripts/releases/download/v2.6.0-install1/AdobeUST_2.6.0.exe) for a streamlined setup process|
+|<img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/winlogo.png" height="50" width="54"> | **Windows**: <br/> Use the msi based [windows installer](https://github.com/adobe/UST-Install-Scripts/releases/download/v2.6.0-install/AdobeUST_2.6.0.exe) for a streamlined setup process|
 | <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/ubuntulogo.png" height="25" width="25" > <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/redhatlogo.png" height="25" width="25"><br/><img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/fedora.png" height="25" width="25"> <img src="https://github.com/adobe/UST-Install-Scripts/raw/master/contributing/centoslogo.png" height="25" width="25"> | **Linux**: <br/>Follow the [directions below](https://github.com/adobe/UST-Install-Scripts#linux-ubuntu-1604-centos-7-fedora-redhat) to install on any supported platform.
 
 
@@ -26,7 +26,7 @@ Configuration of the UST is beyond the scope of this page - please visit the lin
 |Setup and Success Guide | https://adobe-apiplatform.github.io/user-sync.py/en/success-guide/<br/>
 |UST Setup Walkthrough | https://helpx.adobe.com/enterprise/using/user-sync.html
 
-You can also download the Adobe.IO UMAPI certgen tool (windows only) independently [here](https://github.com/adobe/UST-Install-Scripts/raw/resources/AdobeIOCertgen.zip) if you only need to update your cert/keypair.  This is included as a part of the full installation as well.
+You can also download the Adobe.IO UMAPI certgen tool (windows only) independently [here](https://github.com/adobe/UST-Install-Scripts/raw/master/resources/AdobeIOCertgen.zip) if you only need to update your cert/keypair.  This is included as a part of the full installation as well.
 
 <br/>
 
