@@ -11,7 +11,6 @@ build:
 	makensis.exe ust_setup.nsi
 
 sign:
-	@mkdir ${signed_dir}
 	java -jar "${BAST_HOME}\client.jar" -s \
 	-b "${output_dir}" \
 	-d "${signed_dir}" \
