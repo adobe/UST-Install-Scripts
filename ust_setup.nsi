@@ -40,11 +40,11 @@ Section "Install"
     File /r "files\*"
 
     FileOpen $0 "$INSTDIR\Run_UST_Test_Mode.bat" w
-    FileWrite $0 'mode 155,50$\r$\ncd /D "%~dp0"$\r$\nuser-sync.exe --process-groups --users mapped -t$\r$\npause'
+    FileWrite $0 'mode 155,50$\r$\ncd /D "%~dp0"$\r$\nuser-sync.exe -t$\r$\npause'
     FileClose $0
 
     FileOpen $0 "$INSTDIR\Run_UST_Live_Mode.bat" w
-    FileWrite $0 'mode 155,50$\r$\ncd /D "%~dp0"$\r$\nuser-sync.exe --process-groups --users mapped'
+    FileWrite $0 'mode 155,50$\r$\ncd /D "%~dp0"$\r$\nuser-sync.exe'
     FileClose $0
 
     CopyFiles "$INSTDIR\examples\config files - basic\connector-ldap.yml" "$INSTDIR"
