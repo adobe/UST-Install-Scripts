@@ -19,9 +19,8 @@ pipeline {
         stage('Configure') {
             steps {
                 script {
-                    dir('user_sync') {
-                        env.VERSION = sh returnStdout: true, script: "type .\\version.txt"
-                    }
+                    powershell 'ls'
+                    env.VERSION = powershell returnStdout: true, script: "type version.txt"
                     env.VERSION = env.VERSION.trim()
                     echo "Version: ${env:VERSION}"
                     echo "Signed build: ${env:SIGNED_RELEASE}"
