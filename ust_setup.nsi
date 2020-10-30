@@ -39,18 +39,6 @@ Section "Install"
     SetOutPath $INSTDIR
     File /r "files\*"
 
-    FileOpen $0 "$INSTDIR\Run_UST_Test_Mode.bat" w
-    FileWrite $0 'mode 155,50$\r$\ncd /D "%~dp0"$\r$\nuser-sync.exe -t$\r$\npause'
-    FileClose $0
-
-    FileOpen $0 "$INSTDIR\Run_UST_Live_Mode.bat" w
-    FileWrite $0 'mode 155,50$\r$\ncd /D "%~dp0"$\r$\nuser-sync.exe'
-    FileClose $0
-
-    CopyFiles "$INSTDIR\examples\config files - basic\connector-ldap.yml" "$INSTDIR"
-    CopyFiles "$INSTDIR\examples\config files - basic\connector-umapi.yml" "$INSTDIR"
-    CopyFiles "$INSTDIR\examples\config files - basic\user-sync-config.yml" "$INSTDIR"
-
     CreateShortCut "$INSTDIR\Configure UST.lnk" "$INSTDIR\Utils\Adobe.UST.Configuration.App.exe" \
     "" "$INSTDIR\Utils\configapp-logo.ico" 0 SW_SHOWNORMAL \
     ALT|CONTROL|SHIFT|F5 "Configure the User Sync Tool"
@@ -63,9 +51,14 @@ Section "Install"
     "" "$INSTDIR\Utils\Certgen\AdobeIOCertgen.exe" 0 SW_SHOWNORMAL \
     ALT|CONTROL|SHIFT|F5 "Create a new cert/keypair"
 
+    nsExec::Exec 'user-sync.exe init'
+
     AccessControl::GrantOnFile \
         "$INSTDIR\" "(S-1-1-0)" "GenericRead + GenericWrite + GenericExecute + Delete"
     Pop $0
+
+    
+  
 
 SectionEnd 
 !insertmacro MUI_LANGUAGE "English"

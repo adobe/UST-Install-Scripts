@@ -19,7 +19,6 @@ Var hCtl_custom_z_Label2
 Var hCtl_custom_z_Label1
 Var hCtl_custom_z_WizardChk
 Var hCtl_custom_z_FolderChk
-Var hCtl_custom_z_CertgenChk
 Var hCtl_custom_z_Bitmap1
 Var hCtl_custom_z_Bitmap1_hImage
 Var hCtl_custom_z_Font1
@@ -52,7 +51,7 @@ Function fnc_custom_z_Create
   SetCtlColors $hCtl_custom_z_Label1 0x000000 0xFFFFFF
   
   ; === WizardChk (type: Checkbox) ===
-  ${NSD_CreateCheckbox} 125u 112u 194u 13u "Start the UST Configuration Wizard"
+  ${NSD_CreateCheckbox} 125u 98u 194u 13u "Start the UST Configuration Wizard"
   Pop $hCtl_custom_z_WizardChk
   SetCtlColors $hCtl_custom_z_WizardChk 0x000000 0xFFFFFF
   
@@ -61,11 +60,6 @@ Function fnc_custom_z_Create
   Pop $hCtl_custom_z_FolderChk
   SetCtlColors $hCtl_custom_z_FolderChk 0x000000 0xFFFFFF
   
-  ; === CertgenChk (type: Checkbox) ===
-  ${NSD_CreateCheckbox} 125u 98u 194u 13u "Run Adobe.IO Certgen to create UMAPI certs"
-  Pop $hCtl_custom_z_CertgenChk
-  SetCtlColors $hCtl_custom_z_CertgenChk 0x000000 0xFFFFFF
-  
   ; === Bitmap1 (type: Bitmap) ===
   ${NSD_CreateBitmap} 0u 0u 109u 193u ""
   Pop $hCtl_custom_z_Bitmap1
@@ -73,8 +67,6 @@ Function fnc_custom_z_Create
   File "/oname=$PLUGINSDIR\splash.bmp" ${splash}
   ${NSD_SetStretchedImage} $hCtl_custom_z_Bitmap1 "$PLUGINSDIR\splash.bmp" $hCtl_custom_z_Bitmap1_hImage
   
-
-  ${NSD_SetState} $hCtl_custom_z_CertgenChk 1
   ${NSD_SetState} $hCtl_custom_z_FolderChk 1
 
 ;  Set text on Next button
@@ -103,13 +95,6 @@ Function fnc_custom_z_Show
   nsDialogs::Show  
 FunctionEnd
 
-Function run_certgen
-	${NSD_GetState} $hCtl_custom_z_CertgenChk $1
-	${If} $1 == 1
-		ExecShell "" "Utils\Certgen\AdobeIOCertgen.exe"
-	${EndIf}
-FunctionEnd
-
 Function run_folder
 	${NSD_GetState} $hCtl_custom_z_FolderChk $1
 	${If} $1 == 1
@@ -125,7 +110,7 @@ Function run_wiz
 FunctionEnd
 
 Function fnc_custom_z_Leave
-  Call run_certgen
+  ;Call run_certgen
   Call run_folder
   Call run_wiz
 
