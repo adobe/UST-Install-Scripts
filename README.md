@@ -1,4 +1,4 @@
-<img src="resources/images/adobe-2020-red" height="150"> | <h1>Adobe User Sync Tool</h1><h2>Setup Guide</h2>
+<img src="resources/images/adobe-2020-red.png" height="150"> | <h1>Adobe User Sync Tool</h1><h2>Setup Guide</h2>
 ------------ | -------------
 
 <br/>
