@@ -10,7 +10,7 @@ The UST should be installed on a VM or stable server if possible - the platforms
 
  Platform |  Installer
 |------------ | :-------------|
-|<img src="resources/images/winlogo.png" height="50" width="54"> | **Windows**: <br/> Use the [windows installer](https://github.com/adobe/UST-Install-Scripts/releases/download/2.6.1B/AdobeUSTSetup-2.6.1.exe) for a streamlined setup process|
+|<img src="resources/images/winlogo.png" height="50" width="54"> | **Windows**: <br/> Use the [windows installer](https://github.com/adobe/UST-Install-Scripts/releases/download/2.6.1B/AdobeUSTSetup-2.6.2.exe) for a streamlined setup process|
 | <img src="resources/images/ubuntulogo.png" height="25" width="25" > <img src="resources/images/redhatlogo.png" height="25" width="25"><br/><img src="resources/images/fedora.png" height="25" width="25"> <img src="resources/images/centoslogo.png" height="25" width="25"> | **Linux**: <br/>Follow the [directions below](https://github.com/adobe/UST-Install-Scripts#linux-ubuntu-1604-centos-7-fedora-redhat) to install on any supported platform.
 
 
