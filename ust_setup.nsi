@@ -7,7 +7,7 @@ Unicode True
 
 !define splash "resources\images\logo_6.bmp"
 !define /file VERSION "version.txt"
-!define PATH_OUT "bin"
+!define PATH_OUT "dist"
 !system 'md "${PATH_OUT}"'
 
 !include "MUI2.nsh"
