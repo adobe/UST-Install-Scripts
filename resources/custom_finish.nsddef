@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This file was created by NSISDialogDesigner 1.5.0.0
+https://coolsoft.altervista.org/nsisdialogdesigner
+Do not edit manually!
+-->
+<Dialog Name="custom_z" Title="Dialog title..." DialogID="1044" Subtitle="Dialog subtitle..." BackColor="Window">
+  <Label Name="Label2" Location="247, 33" Size="315, 61" Text="Completing the Adobe User Sync Tool Setup" Font="Microsoft Sans Serif, 13.8pt, style=Bold" TabIndex="0" />
+  <Label Name="Label1" Location="247, 112" Size="315, 54" Text="The Adobe User Sync Tool has been installed on your computer.$\r$\n$\r$\nClick Finish to close Setup." TabIndex="1" />
+  <CheckBox Name="WizardChk" Location="247, 237" Size="383, 27" Text="Start the UST Configuration Wizard" TabIndex="2" />
+  <CheckBox Name="FolderChk" Location="247, 179" Size="383, 27" Text="Open User-Sync folder" TabIndex="3" />
+  <Bitmap Name="Bitmap1" Location="0, 0" Size="215, 411" ImageFilename="G:\Repositories\Adobe\nsis\resources\images\dlgbmp-adobe-thin.bmp" Stretched="True" TabIndex="5" />
+</Dialog>

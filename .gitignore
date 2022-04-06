@@ -1,0 +1,11 @@
+
+dist/
+.idea/
+.vs/
+.vscode/
+bin
+
+*.log
+
+AdobeUSTSetup*
+
