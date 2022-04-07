@@ -22,3 +22,9 @@ $ust_filename = "user-sync-v${ust_version}-win64.zip"
 Get-Asset $ust_url $ust_filename $tmpdir ".\files\"
 md ".\files\examples" -Force
 Get-Asset $ust_url "user-sync-examples.zip" $tmpdir ".\files\examples\"
+
+$npp_url = "https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.3.3"
+$npp_filename = "npp.8.3.3.portable.x64.zip"
+$npp_dir = ".\files\Utils\Notepad++\"
+md $npp_dir -Force
+Get-Asset $npp_url $npp_filename $tmpdir $npp_dir
