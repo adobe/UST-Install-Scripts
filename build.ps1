@@ -4,20 +4,21 @@ function Get-TempDir {
     return (Join-Path $parent "ust-installer" $name)
 }
 
+function Get-Asset {
+    param ($base_url, $filename, $tmpdir, $dest_dir)
+    $dl_file = Join-Path $tmpdir $filename
+    Invoke-WebRequest -Uri "${base_url}/${filename}" -OutFile $dl_file
+    Expand-Archive -LiteralPath $dl_file -DestinationPath $dest_dir -Force
+}
+
 # set up temp directory
-$version = (Get-Content version.txt).trim()
-$ust_filename = "user-sync-v${version}-win64.zip"
 $tmpdir = Get-TempDir
 New-Item -ItemType Directory -Path $tmpdir
 
-# download UST zip
-$ust_dl_dest = Join-Path $tmpdir $ust_filename
-$ust_url = "https://github.com/adobe-apiplatform/user-sync.py/releases/download/v${version}/${ust_filename}"
-Invoke-WebRequest -Uri $ust_url -OutFile $ust_dl_dest
-
-# extract UST zip
-Expand-Archive -LiteralPath $ust_dl_dest -DestinationPath .\files\ -Force
-
-Write-Output $ust_url
-Write-Output $tmpdir
-Write-Output $ust_dl_dest
+# download and extract UST zip and examples
+$ust_version = (Get-Content version.txt).trim()
+$ust_url = "https://github.com/adobe-apiplatform/user-sync.py/releases/download/v${ust_version}"
+$ust_filename = "user-sync-v${ust_version}-win64.zip"
+Get-Asset $ust_url $ust_filename $tmpdir ".\files\"
+md ".\files\examples" -Force
+Get-Asset $ust_url "user-sync-examples.zip" $tmpdir ".\files\examples\"
