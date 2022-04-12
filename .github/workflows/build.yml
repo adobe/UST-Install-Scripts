@@ -13,9 +13,8 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install plugin
       run: |
-        mkdir tmp
-        cd tmp
         Invoke-WebRequest -Uri "https://nsis.sourceforge.io/mediawiki/images/4/4a/AccessControl.zip" -OutFile AccessControl.zip
         Expand-Archive -LiteralPath .\AccessControl.zip -DestinationPath "C:\Program Files (x86)\NSIS\" -Force
+        Copy-Item "C:\Program Files (x86)\NSIS\Plugins\i386-unicode\AccessControl.dll" -Destination "C:\Program Files (x86)\NSIS\Plugins\x86-unicode\"
     - name: Run build
       run: make
