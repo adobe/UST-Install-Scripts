@@ -16,6 +16,6 @@ jobs:
         mkdir tmp
         cd tmp
         Invoke-WebRequest -Uri "https://nsis.sourceforge.io/mediawiki/images/4/4a/AccessControl.zip" -OutFile AccessControl.zip
-        Expand-Archive -LiteralPath .\AccessControl.zip -DestinationPath "C:\Program Files (x86)\NSIS\Plugins\x86-unicode\" -Force
+        Expand-Archive -LiteralPath .\AccessControl.zip -DestinationPath "C:\Program Files (x86)\NSIS\" -Force
     - name: Run build
-        make
+      run: make
