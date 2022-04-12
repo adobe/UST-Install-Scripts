@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    tags:
+    - 'v*'
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install plugin
+      run: |
+        Invoke-WebRequest -Uri "https://nsis.sourceforge.io/mediawiki/images/4/4a/AccessControl.zip" -OutFile AccessControl.zip
+        Expand-Archive -LiteralPath .\AccessControl.zip -DestinationPath "C:\Program Files (x86)\NSIS\" -Force
+        Copy-Item "C:\Program Files (x86)\NSIS\Plugins\i386-unicode\AccessControl.dll" -Destination "C:\Program Files (x86)\NSIS\Plugins\x86-unicode\"
+    - name: Run build
+      run: make
+    - name: Archive build
+      uses: actions/upload-artifact@v2
+      with:
+        name: ust-installer
+        path: dist/AdobeUSTSetup.exe
+        retention-days: 30
+    - name: Create release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: User Sync Tool ${{ github.ref }}
+        body: |
+          See [release notes for ${{ github.ref }}](https://github.com/adobe-apiplatform/user-sync.py/releases/tag/{{ github.ref }}) for more information.
+        draft: false
+        prerelease: false
