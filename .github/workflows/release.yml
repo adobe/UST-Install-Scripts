@@ -23,6 +23,9 @@ jobs:
         name: ust-installer
         path: dist/AdobeUSTSetup.exe
         retention-days: 30
+    - name: Get version tag
+      id: get_version
+      uses: battila7/get-version-action@v2
     - name: Create release
       uses: actions/create-release@v1
       env:
@@ -31,6 +34,6 @@ jobs:
         tag_name: ${{ github.ref }}
         release_name: User Sync Tool ${{ github.ref }}
         body: |
-          See [release notes for ${{ github.ref }}](https://github.com/adobe-apiplatform/user-sync.py/releases/tag/{{ github.ref }}) for more information.
+          See [release notes for ${{ steps.get_version.outputs.version }}](https://github.com/adobe-apiplatform/user-sync.py/releases/tag/${{ steps.get_version.outputs.version }}) for more information.
         draft: false
         prerelease: false
