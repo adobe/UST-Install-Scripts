@@ -29,6 +29,6 @@ $npp_dir = ".\files\Utils\Notepad++\"
 md $npp_dir -Force
 Get-Asset $npp_url $npp_filename $tmpdir $npp_dir
 
-$cfg_app_url = "https://github.com/adobe-dmeservices/ust-configapp-v2/releases/download/v2.0/Adobe.UST.Configuration.App.exe"
+$cfg_app_url = "https://github.com/adobe-dmeservices/ust-configapp-v2/releases/download/v2.0.1/Adobe.UST.Configuration.App.exe"
 $cfg_app_file = "Adobe.UST.Configuration.App.exe"
 Invoke-WebRequest -Uri $cfg_app_url -OutFile (Join-Path ".\files\Utils\" $cfg_app_file)
