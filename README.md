@@ -5,7 +5,7 @@
 
 
 ### Installing the User Sync Tool
-The UST should be installed on a VM or stable server if possible - the platforms listed below are supported.  The tool can be installed on an existing server ([AUSST](https://helpx.adobe.com/enterprise/package/help/update-server-setup-tool.html) for example), but and islolated solution is recommended for long term stability and maintainability.  The tool should be hosted within your network's firewall, and should be able to reach your Active Directory DC's, or other identity source. Follow the directions below to get started with installing the UST.
+The UST should be installed on a VM or stable server if possible - the platforms listed below are supported.  The tool can be installed on an existing server ([AUSST](https://helpx.adobe.com/enterprise/package/help/update-server-setup-tool.html) for example), but and islolated solution is recommended for long term stability and maintainability.  The tool should be hosted within your network's firewall, and should be able to reach your Active Directory Server(s), or other identity source. Follow the directions below to get started with installing the UST.
 
 
  Platform |  Installer
